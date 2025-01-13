@@ -6,10 +6,10 @@ thought into anything here, so the code quality is abysmal!
 
 Everything in the root folder is stuff I actually use(d).
 
-`experiments/` just contains some test scripts that aren't things I intend to
+[experiments](/experiments/) just contains some test scripts that aren't things I intend to
 use. Sometimes I just wanna try out some stuff, like having fun with WASM.
 
-`utils.js` contains a random assortment of things I think (or thought) might be
+[utils.js](/utils.js) contains a random assortment of things I think (or thought) might be
 reusable. It also contains all `DATA_CHECK` answers I know of, so spoilers be
 ahead!
 
