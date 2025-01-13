@@ -1,69 +1,5 @@
 function(context, args)
 {
-	const colors = ["red", "orange", "yellow", "lime", "green", "cyan", "blue", "purple"];
-	function getColors(index) {
-		const complementIndex = (index + 4) % 8;
-		const triad1Index = (index + 5) % 8;
-		const triad2Index = (index + 3) % 8;
-
-		if (index == colors.length) return null;
-
-		return {
-			index: index,
-			color: colors[index],
-			complement: colors[complementIndex],
-			triad1: colors[triad1Index],
-			triad2: colors[triad2Index],
-		};
-	}
-
-	function isPrime(n) {
-		for (let i = 2; i <= (n / 2); i++) {
-			if ((n % i) == 0) return false;
-		}
-
-		return true;
-	}
-
-	function getPrimes(primeLimit) {
-		let primeNumbers = [];
-
-		for (let n = 2; n < primeLimit; n++) {
-			if (isPrime(n)) primeNumbers.push(n);
-		}
-
-		return primeNumbers;
-	}
-
-	const ez = ["open", "unlock", "release"];
-	const locket = ["6hh8xw", "cmppiq", "sa23uw", "tvfkyq", "uphlaw", "vc2c7q", "xwz7j4"];
-
-	const answers = {
-		"pet, pest, plague and meme are accurate descriptors of the ++++++": "bunnybat",
-		"user ++++++ provides instruction via script": "teach",
-		"users gather in channel CAFE to share ++++++": "poetry",
-		"communications issued by user ++++++ demonstrate structural patterns associated with humor": "sans_comedy",
-		"safety depends on the use of scripts.++++++": "get_level",
-		"user 'on_th3_1ntern3ts' has ++++++ many things": "heard",
-		"service ++++++ provides atmospheric updates via the port epoch environment": "weathernet",
-		"a ++++++ is a household cleaning device with a rudimentary networked sentience": "robovac",
-		"\"did you know\" is a communication pattern common to user ++++++": "fran_lee",
-		"user ++++++ uses the port epoch environment to request gc": "outta_juice",
-		"data does not contain truth is the first part of an idiom spread by the ++++++ assembly": "skimmerite",
-		"sheriff nub holds sway over the town of ol' ++++++": "nubloopstone",
-		"conditions are clear above ++++++ and the city is within operational radius": "",
-		"the listed components of the breakfast galleon are inside, outside, and ++++++": "crowsnest",
-		"robovac_++++++, moreso than most of its kind, has a tendency to become stuck": "idp1p1",
-		"the fourth hidden theme is ++++++": "executives",
-	};
-
-	function getDataCheckAnswer(prompt) {
-		return prompt.split("\n")
-			.map(q => answers[q])
-			.filter(q => q)
-			.join("");
-	}
-
 	const navKeys = ["navigation", "entry", "get", "see", "command", "process", "open", "action", "nav", "cmd", "show"];
 	const knownUsers = [
 		"thedude", "yung_lespaul", "b4rry_vv", "amelie", "theformalartist",
@@ -84,15 +20,125 @@ function(context, args)
 		"mh_hamilton", "rob_rob_taylor", "shareef_j", "zap_moon"
 	];
 
+	#G.logEntries = [];
+
+	// Basically an enum, right?
+	// Don't refer to these numbers directly, in case levels are added later!
+	const logLevelNumbers = {
+		info: 0,
+		warn: 1,
+		error: 2,
+		internalError: 3,
+	};
+
+	const levelTags = {
+		info: " `S[INFO]` ",
+		warn: " `K[WARN]` ",
+		error: "`D[ERROR]` ",
+		internalWarning: "`H[LOGGING WARNING]` ",
+		internalError: "`W[LOGGING ERROR]` ",
+
+	};
+
+	function shouldLog(current, actual) {
+		return logLevelNumbers[current] <= logLevelNumbers[actual];
+	}
+
+	function log_internalWarning(self, msg) {
+		#G.logEntries.push({
+			level: "internalWarning",
+			msg: msg.toString(),
+		});
+	}
+
+	function log_internalError(self, msg) {
+		#G.logEntries.push({
+			level: "internalError",
+			msg: msg.toString(),
+		});
+	}
+
+	function log_log(self, msg, level) {
+		let msgToPush;
+		if (msg === undefined) {
+			msgToPush = "";
+		} else if (msg === null) {
+			msgToPush = "null";
+		} else {
+			msgToPush = msg.toString();
+		}
+
+		#G.logEntries.push({
+			level: level || "info",
+			tag: self._name,
+			msg: msgToPush,
+		});
+	}
+
+	function log_info(self, msg) {
+		self.log(msg, "info");
+	}
+
+	function log_warn(self, msg) {
+		self.log(msg, "warn");
+	}
+
+	function log_error(self, msg) {
+		self.log(msg, "error");
+	}
+
+	function log_getOutput(self, options) {
+		options = options || {};
+		const logLevel = options.logLevel || "info";
+		const omitLevels = options.omitLevels || false;
+		const omitNames = options.omitNames || false;
+
+		return #G.logEntries
+			.filter(({ tag }) => (tag == self._name) || (tag && tag.includes(self._name)))
+			.filter(({ level }) => shouldLog(logLevel, level))
+			.map(({ level, msg, tag }) => {
+				const levelPrefix = !omitLevels ? levelTags[level] : "";
+				const namePrefix = (!omitNames && tag) ? `[${tag}] ` : "";
+				return levelPrefix + namePrefix + msg;
+			})
+			.join("\n");
+	}
+
+	function log_getLogger(self, name) {
+		if (!name) {
+			const thisLoggerName = self._parent ? self._parent._name : "root logger";
+			self._internalWarning(`Creating child logger of ${thisLoggerName} without a name!`);
+			name = "???";
+		}
+
+		const childName = (self._name ? (self._name + "/") : "") + name;
+		return new Logger(self, childName);
+	}
+
+	function Logger(parent, name) {
+		const l = {
+			_parent: parent || null,
+			_name: name || null,
+		};
+
+		l.log = log_log.bind(l, l);
+		l.info = log_info.bind(l, l);
+		l.warn = log_warn.bind(l, l);
+		l.error = log_error.bind(l, l);
+		l._internalWarning = log_internalWarning.bind(l, l);
+		l._internalError = log_internalError.bind(l, l);
+		l.getLogger = log_getLogger.bind(l, l);
+		l.getOutput = log_getOutput.bind(l, l);
+
+		return l;
+	}
+
+	const rootLogger = new Logger();
+
 	return {
 		ok: true,
-		colors,
-		getColors,
-		getPrimes,
-		ez: ez,
-		locket: locket,
-		getDataCheckAnswer,
 		navKeys,
 		knownUsers,
+		logger: rootLogger,
 	};
 }
