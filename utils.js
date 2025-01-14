@@ -20,6 +20,24 @@ function(context, args)
 		"mh_hamilton", "rob_rob_taylor", "shareef_j", "zap_moon"
 	];
 
+	function isPrime(n) {
+		for (let i = 2; i <= (n / 2); i++) {
+			if ((n % i) == 0) return false;
+		}
+
+		return true;
+	}
+
+	function getPrimes(primeLimit) {
+		let primeNumbers = [];
+
+		for (let n = 2; n < primeLimit; n++) {
+			if (isPrime(n)) primeNumbers.push(n);
+		}
+
+		return primeNumbers;
+	}
+
 	#G.logEntries = [];
 
 	// Basically an enum, right?
@@ -135,10 +153,59 @@ function(context, args)
 
 	const rootLogger = new Logger();
 
+	function parseSpecs(specs) {
+		const linesRaw = specs.split("\n");
+
+		const lines = linesRaw.map(line => line.includes(" ") ? line.split(" ")[1] : line);
+		const classScores = linesRaw[11].split(" ")
+			.map(s => /\d+/.exec(s))
+			.map(s => parseInt(s));
+
+		const upgradeSlots = lines[18].split("/").map(n => parseInt(n));
+		const upgradesLoaded = lines[19].split("/").map(n => parseInt(n));
+
+		const stripColor = (str) => str.substring(2, str.length - 1);
+
+		return {
+			username: stripColor(linesRaw[4].split(" ")[0]),
+			class: {
+				logo: linesRaw.slice(0, 3).join("\n"),
+				name: lines[4].substring(3, lines[4].length - 2), // also strip ()
+			},
+			tier: parseInt(lines[6]),
+			hardline: {
+				count: parseInt(lines[8]),
+				next: parseInt(stripColor(lines[9]).replace("s", "")),
+			},
+			scores: {
+				architect: classScores[0],
+				junkrack: classScores[1],
+				infiltrator: classScores[2],
+				scavenger: classScores[3],
+				executive: classScores[4],
+			},
+			channel_count: parseInt(lines[13]),
+			gc_max: lines[15],
+			upgrades: {
+				held: upgradeSlots[0],
+				max_held: upgradeSlots[1],
+				loaded: upgradesLoaded[0],
+				max_loaded: upgradesLoaded[1],
+			},
+			scripts: {
+				public: parseInt(lines[22]),
+				slots: parseInt(lines[23]),
+				chars: parseInt(lines[24]),
+			}
+		};
+	}
+
 	return {
 		ok: true,
 		navKeys,
 		knownUsers,
+		getPrimes,
 		logger: rootLogger,
+		parseSpecs,
 	};
 }
