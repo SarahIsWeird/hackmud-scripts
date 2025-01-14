@@ -28,7 +28,7 @@ function(context, args) // { target: #s.some.npc }
     }
 
 ////////////////////////////////////////////////////////////////////////////////
-//						 EZ-series unlockers 								  //
+//                          EZ-series unlockers                               //
 ////////////////////////////////////////////////////////////////////////////////
 
     const ez = ["open", "unlock", "release"];
@@ -75,7 +75,7 @@ function(context, args) // { target: #s.some.npc }
     }
 
 ////////////////////////////////////////////////////////////////////////////////
-//					     c00X-series unlockers 								  //
+//                          c00X-series unlockers                             //
 ////////////////////////////////////////////////////////////////////////////////
 
     const colors = ["red", "orange", "yellow", "lime", "green", "cyan", "blue", "purple"];
@@ -130,7 +130,7 @@ function(context, args) // { target: #s.some.npc }
     }
 
 ////////////////////////////////////////////////////////////////////////////////
-//					     l0ck-series unlockers 								  //
+//                          l0ck-series unlockers                             //
 ////////////////////////////////////////////////////////////////////////////////
 
     const locket = ["6hh8xw", "cmppiq", "sa23uw", "tvfkyq", "uphlaw", "vc2c7q", "xwz7j4"];
@@ -182,7 +182,7 @@ function(context, args) // { target: #s.some.npc }
     }
 
 ////////////////////////////////////////////////////////////////////////////////
-//					       DATA_CHECK unlocker 								  //
+//                           DATA_CHECK unlocker                              //
 ////////////////////////////////////////////////////////////////////////////////
 
     const answers = {
@@ -241,7 +241,7 @@ function(context, args) // { target: #s.some.npc }
     }
 
 ////////////////////////////////////////////////////////////////////////////////
-//					      CON_SPEC unlocker 								  //
+//                          CON_SPEC unlocker                                 //
 ////////////////////////////////////////////////////////////////////////////////
 
     function findNextLetters(letterSequence, count) {
@@ -304,7 +304,7 @@ function(context, args) // { target: #s.some.npc }
     }
 
 ////////////////////////////////////////////////////////////////////////////////
-//								Glue code									  //
+//                                Glue code                                   //
 ////////////////////////////////////////////////////////////////////////////////
 
     const unlockers = {
