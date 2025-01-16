@@ -89,10 +89,10 @@ function(context, args) // { target: #s.some.npc }
         return {
             index: index,
             color: colors[index],
-            digit: colors[index].length,
-            complement: colors[complementIndex],
-            triad_1: colors[triad1Index],
-            triad_2: colors[triad2Index],
+            color_digit: colors[index].length,
+            color_complement: colors[complementIndex],
+            c003_triad_1: colors[triad1Index],
+            c003_triad_2: colors[triad2Index],
         };
     }
 
@@ -105,7 +105,7 @@ function(context, args) // { target: #s.some.npc }
 
         const colorData = getColors(colorIndex);
         for (const key of extraKeys) {
-            keys[`${name}_${key}`] = colorData[key];
+            keys[key] = colorData[key];
         }
 
         res = target.call(keys);
@@ -118,15 +118,15 @@ function(context, args) // { target: #s.some.npc }
     }
 
     function unlock_c001() {
-        return unlock_c00X("c001", ["digit"], "color name");
+        return unlock_c00X("c001", ["color_digit"], "color name");
     }
 
     function unlock_c002() {
-        return unlock_c00X("c002", ["complement"], "complement color");
+        return unlock_c00X("c002", ["c003_complement"], "complement color");
     }
 
     function unlock_c003() {
-        return unlock_c00X("c003", ["triad_1", "triad_2"], "triad color");
+        return unlock_c00X("c003", ["c003_triad_1", "c003_triad_2"], "triad color");
     }
 
 ////////////////////////////////////////////////////////////////////////////////
