@@ -113,7 +113,7 @@ function(context, args)
 
         return #G.logEntries
             .filter(({ tag }) => (tag == self._name) || (tag && tag.includes(self._name)))
-            .filter(({ level }) => shouldLog(logLevel, level))
+            .filter(({ level }) => shouldLog(level, logLevel))
             .map(({ level, msg, tag }) => {
                 const levelPrefix = !omitLevels ? levelTags[level] : "";
                 const namePrefix = (!omitNames && tag) ? `[${tag}] ` : "";
