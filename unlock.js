@@ -304,6 +304,49 @@ function(context, args) // { target: #s.some.npc }
     }
 
 ////////////////////////////////////////////////////////////////////////////////
+//                           magnara unlocker                                 //
+////////////////////////////////////////////////////////////////////////////////
+
+    function getWords(wordLength) {
+        return #db.f({ type: 'dictionary', wordLength: wordLength }).first();
+    }
+
+    function areAnagrams(word1, word2) {
+        const sortedWord1 = word1.split("").sort().join("");
+        const sortedWord2 = word2.split("").sort().join("");
+
+        return sortedWord1 == sortedWord2;
+    }
+
+    function unlock_magnara() {
+        keys.magnara = "";
+        res = target.call(keys);
+
+        const promptParts = res.split("\n")[0].split(" ");
+        const scrambledLetters = promptParts[promptParts.length - 1];
+
+        const words = getWords(scrambledLetters.length);
+        if (words == null) {
+            logger.error(`Missing database entry! (Word length \`V${scrambledLetters.length}\`)`);
+            return false;
+        }
+
+        for (const word of words.words) {
+            if (!areAnagrams(scrambledLetters, word)) continue;
+
+            keys.magnara = word;
+            res = target.call(keys);
+            if (res.includes("recinroct")) continue;
+
+            logger.info(`Unlocked magnara: \`V${word}\``);
+            return true;
+        }
+
+        logger.error("Failed to unlock magnara!");
+        return false;
+    }
+
+////////////////////////////////////////////////////////////////////////////////
 //                                Glue code                                   //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -318,6 +361,7 @@ function(context, args) // { target: #s.some.npc }
         "DATA_CHECK": unlock_data_check,
         "CON_SPEC": unlock_con_spec,
         "appropriate k3y:": unlock_l0ckbox,
+        "magnara": unlock_magnara,
     };
 
     function getUnlocker() {
