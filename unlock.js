@@ -144,6 +144,8 @@ function(context, args) // { target: #s.some.npc }
         return true;
     }
 
+    let loadedKey = null;
+
     function unlock_l0ckbox() {
         const k3y = res.substring(res.length - 6);
         const keysWeHave = #hs.sys.upgrades({
@@ -157,7 +159,8 @@ function(context, args) // { target: #s.some.npc }
         if (keysWeHave.length > 0) {
             const k3yUpgrade = keysWeHave[0];
             #ms.sys.manage({ load: k3yUpgrade.i });
-            logger.warn(`Loaded k3y \`0${k3y}\` at upgrade index \`V${k3yUpgrade.i}\`. Please unload it yourself.`);
+            loadedKey = k3yUpgrade.i;
+            logger.info(`Loaded k3y \`0${k3y}\` at upgrade index \`V${k3yUpgrade.i}\`.`);
         } else if (args.rental) {
             logger.warn(`We don't have a \`0${k3y}\` k3y upgrade! Requesting one from \`Dr3dbox\`\`4.\` (matr1x.r3dbox)...`);
 
@@ -408,6 +411,9 @@ function(context, args) // { target: #s.some.npc }
 
         if (!unlockAll()) {
             logger.info("Keys used: " + JSON.stringify(keys));
+        } else if (loadedKey !== null) {
+            #ms.sys.manage({ unload: loadedKey });
+            logger.info(`Unloaded k3y at upgrade index \`V${loadedKey}\`.`);
         }
     }
 
