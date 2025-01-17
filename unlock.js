@@ -90,7 +90,7 @@ function(context, args) // { target: #s.some.npc }
             index: index,
             color: colors[index],
             color_digit: colors[index].length,
-            color_complement: colors[complementIndex],
+            c002_complement: colors[complementIndex],
             c003_triad_1: colors[triad1Index],
             c003_triad_2: colors[triad2Index],
         };
@@ -122,7 +122,7 @@ function(context, args) // { target: #s.some.npc }
     }
 
     function unlock_c002() {
-        return unlock_c00X("c002", ["c003_complement"], "complement color");
+        return unlock_c00X("c002", ["c002_complement"], "complement color");
     }
 
     function unlock_c003() {
