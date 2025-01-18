@@ -207,6 +207,63 @@ function(context, args)
         };
     }
 
+    function timeStringToDate(str) {
+        // Time strings are formatted as YYMMDD.HHMM
+        const year = 2000 + parseInt(str.substring(0, 2));
+        const month = parseInt(str.substring(2, 4)) - 1; // IT'S ZERO BASED >:(
+        const day = parseInt(str.substring(4, 6));
+        // .
+        const hour = parseInt(str.substring(7, 9));
+        const minute = parseInt(str.substring(9, 11));
+
+        return new Date(year, month, day, hour, minute);
+    }
+
+    function findLastIndex(arr, callbackFn) {
+        for (let i = arr.length - 1; i >= 0; i--) {
+            if (callbackFn(arr[i], i, arr)) return i;
+        }
+
+        return -1;
+    }
+
+    // How many seconds two dates can be apart before no longer being seen as the "same".
+    const maxDateDifference = 120;
+    function dateDiffSecs(date1, date2) {
+        return Math.abs(date1.getTime() - date2.getTime()) / 1000;
+    }
+
+    function getLargeTxOffsets(maxLargeDistance) {
+        maxLargeDistance = maxLargeDistance !== undefined ? maxLargeDistance : 2;
+
+        const offsets = [0];
+
+        for (let i = 1; i <= maxLargeDistance; i++) {
+            offsets.push(i);
+            offsets.push(-i);
+        }
+
+        return offsets;
+    }
+
+    function txIndexOf(txs, t) {
+        return txs.findIndex(({ time }) => dateDiffSecs(time, t) <= maxDateDifference);
+    }
+
+    function lastTxIndexOf(txs, t) {
+        return findLastIndex(txs, ({ time }) => dateDiffSecs(time, t) <= maxDateDifference);
+    }
+
+    function sumTxs(txs, caller) {
+        let sum = 0;
+
+        for (const { sender, amount } of txs) {
+            sum += (sender == caller ? -1 : 1) * amount;
+        }
+
+        return sum;
+    }
+
     return {
         ok: true,
         navKeys,
@@ -214,5 +271,12 @@ function(context, args)
         getPrimes,
         logger: rootLogger,
         parseSpecs,
+        timeStringToDate,
+        findLastIndex,
+        dateDiffSecs,
+        getLargeTxOffsets,
+        txIndexOf,
+        lastTxIndexOf,
+        sumTxs,
     };
 }

@@ -318,6 +318,121 @@ function(context, args) // { target: #s.some.npc }
     }
 
 ////////////////////////////////////////////////////////////////////////////////
+//                           acct_nt unlocker                                 //
+////////////////////////////////////////////////////////////////////////////////
+
+    // How many offsets to check for findLargeTransaction.
+    const maxLargeDistance = args.max_large_distance || 2;
+
+    function findLargeTransaction(near, withdrawal) {
+        const transactions = #hs.accts.transactions({
+            count: "all",
+            from: withdrawal ? context.caller : undefined,
+            to: withdrawal ? undefined : context.caller,
+        });
+
+        // keep tally of which tx has the lowest diff to the wanted one
+
+        let nearestDiff = utils.dateDiffSecs(transactions[0].time, near);
+        let nearestI = 0;
+        while (true) {
+            const diff = utils.dateDiffSecs(transactions[nearestI + 1].time, near);
+            if (diff > nearestDiff) break;
+
+            nearestDiff = diff;
+            nearestI++;
+        }
+
+        for (const offset of utils.getLargeTxOffsets(maxLargeDistance)) {
+            const tx = transactions[nearestI + offset];
+            keys.acct_nt = tx.amount;
+            res = target.call(keys);
+
+            if (!res.includes("near")) {
+                logger.info(`Unlocked acct_nt: ${tx.amount}`);
+                return true;
+            }
+        }
+
+        logger.error("Failed to unlock acct_nt!");
+        return false;
+    }
+
+    function netGC(from, to, { depositsOnly, withdrawalsOnly, withMemosOnly, withoutMemosOnly }) {
+        depositsOnly = depositsOnly || false;
+        withdrawalsOnly = withdrawalsOnly || false;
+        withMemosOnly = withMemosOnly || false;
+        withoutMemosOnly = withoutMemosOnly || false;
+
+        let txs = #hs.accts.transactions({
+            count: "all",
+            from: withdrawalsOnly ? context.caller : undefined,
+            to: depositsOnly ? context.caller : undefined,
+        });
+
+        if (withMemosOnly) {
+            txs = txs.filter(({ memo }) => memo);
+        } else if (withoutMemosOnly) {
+            txs = txs.filter(({ memo }) => !memo);
+        }
+
+        const firstStart = utils.txIndexOf(txs, to);
+        const lastEnd = utils.lastTxIndexOf(txs, from);
+
+        txs = txs.slice(firstStart, lastEnd + 1);
+
+        const lastStart = utils.lastTxIndexOf(txs, to);
+        let firstEnd = utils.txIndexOf(txs, from);
+
+        logger.getLogger("acct_nt").debug(`Possible starts: ${lastStart + 1}, possible ends: ${txs.length - firstEnd + 1}`);
+
+        for (let startI = lastStart; startI >= 0; startI--) {
+            for (let endI = firstEnd; endI < txs.length; endI++) {
+                const sum = utils.sumTxs(txs.slice(startI, endI + 1), context.caller);
+
+                keys.acct_nt = sum;
+                res = target.call(keys);
+
+                if (res.split("\n")[0].includes("net")) continue;
+                if (res.split("\n")[0].includes("total")) continue;
+
+                logger.info(`Unlocked acct_nt: ${sum}`);
+                return true;
+            }
+        }
+
+        logger.error("Failed to unlock acct_nt!");
+        return false;
+    }
+
+    function unlock_acct_nt() {
+        keys.acct_nt = "";
+        res = target.call(keys);
+
+        const prompt = res.split("\n")[0];
+        const parts = prompt.split(" ");
+
+        if (prompt.includes("near")) {
+            const time = utils.timeStringToDate(parts[parts.length - 1]);
+            return findLargeTransaction(time, res.includes("withdrawal"));
+        }
+
+        const from = utils.timeStringToDate(parts[parts.length - 3]);
+        const to = utils.timeStringToDate(parts[parts.length - 1]);
+
+        return netGC(
+            from,
+            to,
+            {
+                depositsOnly: prompt.includes("deposits"),
+                withdrawalsOnly: prompt.includes("withdrawals"),
+                withMemosOnly: prompt.includes("with memos"),
+                withoutMemosOnly: prompt.includes("without memos"),
+            }
+        );
+    }
+
+////////////////////////////////////////////////////////////////////////////////
 //                                Glue code                                   //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -333,6 +448,7 @@ function(context, args) // { target: #s.some.npc }
         "CON_SPEC": unlock_con_spec,
         "appropriate k3y:": unlock_l0ckbox,
         "magnara": unlock_magnara,
+        "acct_nt": unlock_acct_nt,
     };
 
     function getUnlocker() {
@@ -418,7 +534,7 @@ function(context, args) // { target: #s.some.npc }
     }
 
     let message = "";
-    const loggerOutput = logger.getOutput();
+    const loggerOutput = logger.getOutput({ logLevel: args.debug ? "debug" : "info" });
     if (loggerOutput) message += loggerOutput;
     if (loggerOutput && res) message += "\n";
     if (res) message += res;
