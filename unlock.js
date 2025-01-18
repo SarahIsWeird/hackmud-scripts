@@ -4,6 +4,25 @@ function(context, args) // { target: #s.some.npc }
     const lib = #fs.scripts.lib();
     const logger = utils.logger;
 
+    const profilerLog = logger.getLogger("PROFILER");
+    if (!args || !args.profiler) {
+        profilerLog.log = () => {};
+    }
+
+    function time(name, cb) {
+        const start = Date.now();
+        const result = cb();
+        const end = Date.now();
+        profilerLog.info(`${name}: ${end - start}ms`);
+        return result;
+    }
+
+    function updateRes() {
+        time("updateRes", () => {
+            res = target.call(keys);
+        });
+    }
+
     const keys = {};
     let target;
     let res;
@@ -17,7 +36,7 @@ function(context, args) // { target: #s.some.npc }
         while (i < choices.length) {
             const choice = choices[i];
             keys[lock] = choice;
-            res = target.call(keys);
+            updateRes();
 
             if (!res.includes(failMsg)) {
                 logger.info(`Unlocked ${lock}: ${choice}`);
@@ -112,7 +131,7 @@ function(context, args) // { target: #s.some.npc }
             keys[key] = colorData[key];
         }
 
-        res = target.call(keys);
+        updateRes();
         if (res.includes(extraFailMsg)) {
             logger.error(`Invalid extra values for color ${colorData.name}`);
             return false;
@@ -184,7 +203,7 @@ function(context, args) // { target: #s.some.npc }
             return false;
         }
 
-        res = target.call(keys);
+        updateRes();
         return true;
     }
 
@@ -203,10 +222,10 @@ function(context, args) // { target: #s.some.npc }
 
     function unlock_data_check() {
         keys.DATA_CHECK = "";
-        res = target.call(keys);
+        updateRes();
         keys.DATA_CHECK = getDataCheckAnswer(res);
 
-        res = target.call(keys);
+        updateRes();
         if (res.includes("++++++")) {
             logger.error("Failed to unlock DATA_CHECK!");
             return false;
@@ -264,12 +283,12 @@ function(context, args) // { target: #s.some.npc }
 
     function unlock_con_spec() {
         keys.CON_SPEC = "";
-        res = target.call(keys);
+        updateRes();
 
         const letterSequence = res.split("\n")[0];
         const nextLetters = findNextLetters(letterSequence);
         keys.CON_SPEC = nextLetters;
-        res = target.call(keys);
+        updateRes();
         if (res.includes("Provide the next three letters in the sequence")) {
             logger.error("Failed to unlock CON_SPEC!")
             return false;
@@ -295,7 +314,7 @@ function(context, args) // { target: #s.some.npc }
 
     function unlock_magnara() {
         keys.magnara = "";
-        res = target.call(keys);
+        updateRes();
 
         const promptParts = res.split("\n")[0].split(" ");
         const scrambledLetters = promptParts[promptParts.length - 1];
@@ -310,7 +329,7 @@ function(context, args) // { target: #s.some.npc }
             if (!areAnagrams(scrambledLetters, word)) continue;
 
             keys.magnara = word;
-            res = target.call(keys);
+            updateRes();
             if (res.includes("recinroct")) continue;
 
             logger.info(`Unlocked magnara: \`V${word}\``);
@@ -329,11 +348,11 @@ function(context, args) // { target: #s.some.npc }
     const maxLargeDistance = args.max_large_distance || 2;
 
     function findLargeTransaction(near, withdrawal) {
-        const transactions = #hs.accts.transactions({
+        const transactions = time("accts.transactions", () => #hs.accts.transactions({
             count: "all",
             from: withdrawal ? context.caller : undefined,
             to: withdrawal ? undefined : context.caller,
-        });
+        }));
 
         // keep tally of which tx has the lowest diff to the wanted one
 
@@ -352,7 +371,7 @@ function(context, args) // { target: #s.some.npc }
             if (tx === undefined) continue;
 
             keys.acct_nt = tx.amount;
-            res = target.call(keys);
+            updateRes();
 
             if (!res.includes("near")) {
                 logger.info(`Unlocked acct_nt: ${tx.amount}`);
@@ -372,11 +391,11 @@ function(context, args) // { target: #s.some.npc }
 
         const acctNtLogger = logger.getLogger("acct_nt");
 
-        let txs = #hs.accts.transactions({
+        let txs = time("accts.transactions", () => #hs.accts.transactions({
             count: "all",
             from: withdrawalsOnly ? context.caller : undefined,
             to: depositsOnly ? context.caller : undefined,
-        });
+        }));
 
         if (withMemosOnly) {
             txs = txs.filter(({ memo }) => memo);
@@ -394,14 +413,22 @@ function(context, args) // { target: #s.some.npc }
 
         acctNtLogger.debug(`Possible starts: ${lastStart + 1}, possible ends: ${txs.length - firstEnd + 1}`);
 
+        const attemptStart = Date.now();
+        const maxAttemptDuration = 3000;
+
         for (let startI = lastStart; startI >= 0; startI--) {
             for (let endI = firstEnd - 1; endI < txs.length; endI++) {
                 if (startI > endI) continue;
 
+                if ((Date.now() - attemptStart) > maxAttemptDuration) {
+                    logger.error("acct_nt solve attempt took over 3000ms!");
+                    return false;
+                }
+
                 const sum = utils.sumTxs(txs.slice(startI, endI + 1), context.caller);
 
                 keys.acct_nt = sum;
-                res = target.call(keys);
+                updateRes();
 
                 if (res.split("\n")[0].includes("net")) continue;
                 if (res.split("\n")[0].includes("total")) continue;
@@ -417,7 +444,7 @@ function(context, args) // { target: #s.some.npc }
 
     function unlock_acct_nt() {
         keys.acct_nt = "";
-        res = target.call(keys);
+        updateRes();
 
         const prompt = res.split("\n")[0];
         const parts = prompt.split(" ");
@@ -460,9 +487,10 @@ function(context, args) // { target: #s.some.npc }
 
     function unlock_sn_w_glock() {
         keys.sn_w_glock = "";
-        res = target.call(keys);
+        updateRes();
 
         const prompt = res.split("\n")[0];
+        if (prompt.includes("LOCK_UNLOCKED")) return true;
 
         const glockSolution = Object.entries(glockBalances).find(([ k ]) => prompt.includes(k));
         if (!glockSolution) {
@@ -477,7 +505,7 @@ function(context, args) // { target: #s.some.npc }
             return false;
         }
 
-        res = target.call(keys);
+        updateRes();
         prevBalance -= neededBalance; // No free money? :(
         logger.info(`Unlocked sn_w_glock: ${lib.to_gc_str(neededBalance)} (${keyWord})`);
         return true;
@@ -514,7 +542,7 @@ function(context, args) // { target: #s.some.npc }
     }
 
     function unlockAll() {
-        res = target.call(keys);
+        updateRes();
 
         let lastUnlocker = null;
         while (res.includes && (res.includes("Denied") || res.includes("To unlock"))) {
@@ -529,7 +557,11 @@ function(context, args) // { target: #s.some.npc }
                 return false;
             }
 
-            if (!unlocker()) {
+            const start = Date.now();
+            const result = unlocker();
+            const end = Date.now();
+            logger.debug(`Solve attempt took ${end - start}ms.`);
+            if (!result) {
                 return false;
             }
 
