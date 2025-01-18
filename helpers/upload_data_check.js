@@ -16,13 +16,17 @@ function(context, args)
         "user ++++++ uses the port epoch environment to request gc": "outta_juice",
         "data does not contain truth is the first part of an idiom spread by the ++++++ assembly": "skimmerite",
         "sheriff nub holds sway over the town of ol' ++++++": "nubloopstone",
-        "conditions are clear above ++++++ and the city is within operational radius": "",
+        "conditions are clear above ++++++ and the city is within operational radius": "atlanta",
         "the listed components of the breakfast galleon are inside, outside, and ++++++": "crowsnest",
         "robovac_++++++, moreso than most of its kind, has a tendency to become stuck": "idp1p1",
         "the fourth hidden theme is ++++++": "executives",
         "a person called anja has lost her ++++++": "blazer",
         "according to the suborbital bulletin, flight ++++++ is en route to ho chi minh": "a2231",
         "user le_mon_squeezy's new s:o ref is ++++++": "unvarnishedpygmyumbrella",
+        "drones from ++++++ may be instructed to perform their task with excessive urgency": "goodfellow",
+        "according to the calibration initiative, humans are expected to be ++++++ by the content": "engaged",
+        "item_id py6874 contains a grand ++++++": "piano",
+        "user ++++++ would leave no stars for the sqrz 480 if they could": "bnnyhunter",
 
         /* Obsolete vLAN questions. These only exist because of outdated locksims :D */
         "according to trust, ++++++ is more than just following directives": "sentience",
@@ -44,7 +48,7 @@ function(context, args)
 
 	const existingEntry = #db.f({ name: 'data_check_answers' }).first();
 	if (existingEntry !== null) {
-		#db.r({ name: 'data_check_answers '});
+		#db.r({ name: 'data_check_answers' });
 		logger.info('Deleted old answer key(s).');
 	}
 
