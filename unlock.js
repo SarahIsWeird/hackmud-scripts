@@ -345,6 +345,8 @@ function(context, args) // { target: #s.some.npc }
 
         for (const offset of utils.getLargeTxOffsets(maxLargeDistance)) {
             const tx = transactions[nearestI + offset];
+            if (tx === undefined) continue;
+
             keys.acct_nt = tx.amount;
             res = target.call(keys);
 
@@ -354,7 +356,7 @@ function(context, args) // { target: #s.some.npc }
             }
         }
 
-        logger.error("Failed to unlock acct_nt!");
+        logger.error("Failed to unlock acct_nt! Try calling with `Nmax_large_distance` greater than 2.");
         return false;
     }
 
@@ -363,6 +365,8 @@ function(context, args) // { target: #s.some.npc }
         withdrawalsOnly = withdrawalsOnly || false;
         withMemosOnly = withMemosOnly || false;
         withoutMemosOnly = withoutMemosOnly || false;
+
+        const acctNtLogger = logger.getLogger("acct_nt");
 
         let txs = #hs.accts.transactions({
             count: "all",
@@ -379,15 +383,17 @@ function(context, args) // { target: #s.some.npc }
         const firstStart = utils.txIndexOf(txs, to);
         const lastEnd = utils.lastTxIndexOf(txs, from);
 
-        txs = txs.slice(firstStart, lastEnd + 1);
+        txs = txs.slice(firstStart, lastEnd);
 
         const lastStart = utils.lastTxIndexOf(txs, to);
         let firstEnd = utils.txIndexOf(txs, from);
 
-        logger.getLogger("acct_nt").debug(`Possible starts: ${lastStart + 1}, possible ends: ${txs.length - firstEnd + 1}`);
+        acctNtLogger.debug(`Possible starts: ${lastStart + 1}, possible ends: ${txs.length - firstEnd + 1}`);
 
         for (let startI = lastStart; startI >= 0; startI--) {
-            for (let endI = firstEnd; endI < txs.length; endI++) {
+            for (let endI = firstEnd - 1; endI < txs.length; endI++) {
+                if (startI > endI) continue;
+
                 const sum = utils.sumTxs(txs.slice(startI, endI + 1), context.caller);
 
                 keys.acct_nt = sum;

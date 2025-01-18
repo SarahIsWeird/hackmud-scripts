@@ -247,11 +247,15 @@ function(context, args)
     }
 
     function txIndexOf(txs, t) {
-        return txs.findIndex(({ time }) => dateDiffSecs(time, t) <= maxDateDifference);
+        const index = txs.findIndex(({ time }) => dateDiffSecs(time, t) <= maxDateDifference);
+        if (index < 0) return 0;
+        return index;
     }
 
     function lastTxIndexOf(txs, t) {
-        return findLastIndex(txs, ({ time }) => dateDiffSecs(time, t) <= maxDateDifference);
+        const index = findLastIndex(txs, ({ time }) => dateDiffSecs(time, t) <= maxDateDifference);
+        if (index < 0) return txs.length;
+        return index;
     }
 
     function sumTxs(txs, caller) {
