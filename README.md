@@ -13,6 +13,8 @@ use. Sometimes I just wanna try out some stuff, like having fun with WASM.
 reusable. It also contains all `DATA_CHECK` answers I know of, so spoilers be
 ahead!
 
+[sahara](/sahara/) contains scripts uploaded to my other user.
+
 ## Logging
 
 A very simple, very hacky logging solution. Uses `#G`, so it can be used from

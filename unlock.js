@@ -1,11 +1,15 @@
 function(context, args) // { target: #s.some.npc }
 {
     const utils = #fs.sarahisweird.utils();
+    const lib = #fs.scripts.lib();
     const logger = utils.logger;
 
     const keys = {};
     let target;
     let res;
+
+    let moneyIsInSahara = false;
+    let prevBalance = 0;
 
     function tryAll(choices, lock, failMsg) {
         let i = 0;
@@ -439,6 +443,47 @@ function(context, args) // { target: #s.some.npc }
     }
 
 ////////////////////////////////////////////////////////////////////////////////
+//                          sn_w_glock unlocker                               //
+////////////////////////////////////////////////////////////////////////////////
+
+    const glockBalances = {
+        "hunter's": 3006,
+        "secret": 7,
+        "secure": 443,
+        "meaning": 42,
+        "beast": 666,
+        "special": 38,
+        "magician": 1089,
+        "elite": 1337,
+        "monolithic": 2001,
+    };
+
+    function unlock_sn_w_glock() {
+        keys.sn_w_glock = "";
+        res = target.call(keys);
+
+        const prompt = res.split("\n")[0];
+
+        const glockSolution = Object.entries(glockBalances).find(([ k ]) => prompt.includes(k));
+        if (!glockSolution) {
+            logger.error("Unknown sn_w_glock prompt: " + prompt);
+            return false;
+        }
+
+        const [ keyWord, neededBalance ] = glockSolution;
+        const { ok, msg } = #ms.sahara.sparkasse({ withdraw: neededBalance });
+        if (!ok) {
+            logger.error("Failed to get required amount from `Ksahara`: " + msg);
+            return false;
+        }
+
+        res = target.call(keys);
+        prevBalance -= neededBalance; // No free money? :(
+        logger.info(`Unlocked sn_w_glock: ${lib.to_gc_str(neededBalance)} (${keyWord})`);
+        return true;
+    }
+
+////////////////////////////////////////////////////////////////////////////////
 //                                Glue code                                   //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -455,6 +500,7 @@ function(context, args) // { target: #s.some.npc }
         "appropriate k3y:": unlock_l0ckbox,
         "magnara": unlock_magnara,
         "acct_nt": unlock_acct_nt,
+        "sn_w_glock": unlock_sn_w_glock,
     };
 
     function getUnlocker() {
@@ -527,15 +573,55 @@ function(context, args) // { target: #s.some.npc }
 
         return true;
     }
+
+    function getMoneyBack() {
+        const { ok } = #ms.sahara.sparkasse({ withdraw: prevBalance });
+        if (!ok) {
+            logger.error("Failed to get funds back from sahara.sparkasse!");
+            logger.error("Please tell Sarah about this! You will get your money back!");
+            return false;
+        }
+
+        moneyIsInSahara = false;
+        logger.warn("Withdrawn money from `Ksahara`.");
+        return true;
+    }
     
     if (canStartAttempt()) {
         target = args.target;
 
-        if (!unlockAll()) {
-            logger.info("Keys used: " + JSON.stringify(keys));
-        } else if (loadedKey !== null) {
-            #ms.sys.manage({ unload: loadedKey });
-            logger.info(`Unloaded k3y at upgrade index \`V${loadedKey}\`.`);
+        prevBalance = #hs.accts.balance();
+        if (prevBalance > 32000000000) {
+            logger.error("You have more than 32BGC! accts.xfer_gc_to can only transfer 32BGC at once.");
+            logger.error("Please get rid of some GC before trying again.");
+            return false;
+        }
+
+        const { bal: bankBalance, max: maxBankBalance } = #ms.sahara.sparkasse({ get_balance: true });
+        const combinedBalance = bankBalance + prevBalance;
+        if (combinedBalance > maxBankBalance) {
+            logger.error(`\`Ksahara\` can't hold the GC you have! There's only space for ${lib.to_gc_str(maxBankBalance - bankBalance)}.`);
+            logger.error("Please make sure you have less than that before trying again.");
+            return false;
+        }
+
+        logger.warn(`Previous balance: ${lib.to_gc_str(prevBalance)}, transferring to \`Ksahara\`...`);
+        #ms.accts.xfer_gc_to({ to: "sahara", amount: prevBalance });
+        moneyIsInSahara = true;
+
+        try {
+            if (!unlockAll()) {
+                logger.info("Keys used: " + JSON.stringify(keys));
+            } else if (loadedKey !== null) {
+                #ms.sys.manage({ unload: loadedKey });
+                logger.info(`Unloaded k3y at upgrade index \`V${loadedKey}\`.`);
+            }
+        } catch (error) {
+            logger.error(error.toString());
+        } finally {
+            if (moneyIsInSahara) {
+                getMoneyBack();
+            }
         }
     }
 
