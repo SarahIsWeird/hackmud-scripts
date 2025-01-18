@@ -43,13 +43,15 @@ function(context, args)
     // Basically an enum, right?
     // Don't refer to these numbers directly, in case levels are added later!
     const logLevelNumbers = {
-        info: 0,
-        warn: 1,
-        error: 2,
-        internalError: 3,
+        debug: 0,
+        info: 1,
+        warn: 2,
+        error: 3,
+        internalError: 4,
     };
 
     const levelTags = {
+        debug: "`C[DEBUG] `",
         info: " `S[INFO]` ",
         warn: " `K[WARN]` ",
         error: "`D[ERROR]` ",
@@ -93,6 +95,10 @@ function(context, args)
         });
     }
 
+    function log_debug(self, msg) {
+        self.log(msg, "debug");
+    }
+
     function log_info(self, msg) {
         self.log(msg, "info");
     }
@@ -112,7 +118,7 @@ function(context, args)
         const omitNames = options.omitNames || false;
 
         return #G.logEntries
-            .filter(({ tag }) => (tag == self._name) || (tag && tag.includes(self._name)))
+            .filter(({ tag }) => (self._name == null) || (tag == self._name) || (tag && tag.includes(self._name)))
             .filter(({ level }) => shouldLog(logLevel, level))
             .map(({ level, msg, tag }) => {
                 const levelPrefix = !omitLevels ? levelTags[level] : "";
@@ -140,6 +146,7 @@ function(context, args)
         };
 
         l.log = log_log.bind(l, l);
+        l.debug = log_debug.bind(l, l);
         l.info = log_info.bind(l, l);
         l.warn = log_warn.bind(l, l);
         l.error = log_error.bind(l, l);
