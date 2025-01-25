@@ -1,5 +1,6 @@
 function(context, args) // { target: #s.some.npc }
 {
+    try {
     const utils = #fs.sarahisweird.utils();
     const lib = #fs.scripts.lib();
     const logger = utils.logger;
@@ -345,7 +346,7 @@ function(context, args) // { target: #s.some.npc }
 ////////////////////////////////////////////////////////////////////////////////
 
     // How many offsets to check for findLargeTransaction.
-    const maxLargeDistance = args.max_large_distance || 2;
+    const maxLargeDistance = (args && args.max_large_distance) || 2;
 
     function findLargeTransaction(near, withdrawal) {
         const transactions = time("accts.transactions", () => #hs.accts.transactions({
@@ -664,4 +665,9 @@ function(context, args) // { target: #s.some.npc }
     if (res) message += res;
 
     return message;
+} catch (e) {
+    return { ok: false, msg:
+        `${e.message}\n${e.stack}`
+    }
+}
 }
