@@ -16,8 +16,7 @@ function(context, args)
 		return { ok: false, msg: '\`DYou are not authorized to use this script!\`' };
 	}
 
-
-	if (!args || typeof(args) !== 'object' || (!args.get_balance && !args.withdraw)) {
+	if (!args || typeof(args) !== 'object' || (!args.get_balance && (args.withdraw === undefined))) {
 		return { ok: false, msg: `Usage: ${context.this_script} { \`Nget_balance\`: \`Vtrue\` \`C|\` \`Nwithdraw\`: \`Vamount\` }` };
 	}
 
