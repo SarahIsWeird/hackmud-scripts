@@ -6,7 +6,7 @@ settings:
 
 patchedDependencies:
   typescript:
-    hash: t33fuoy5d7gnk76nfb77yfuzs4
+    hash: 4687663a48d802485eff81e81b90e95738eb92cd35c81e6f0f849ae99ce8670f
     path: patches/typescript.patch
 
 importers:
@@ -14,11 +14,11 @@ importers:
   .:
     devDependencies:
       hackmud-script-manager:
-        specifier: ^0.21.1
-        version: 0.21.1(@babel/core@7.26.0)(typescript@5.7.2(patch_hash=t33fuoy5d7gnk76nfb77yfuzs4))
+        specifier: dev
+        version: 0.21.1-6eb310a(@babel/core@7.26.0)(typescript@5.7.2(patch_hash=4687663a48d802485eff81e81b90e95738eb92cd35c81e6f0f849ae99ce8670f))
       typescript:
         specifier: 5.7.2
-        version: 5.7.2(patch_hash=t33fuoy5d7gnk76nfb77yfuzs4)
+        version: 5.7.2(patch_hash=4687663a48d802485eff81e81b90e95738eb92cd35c81e6f0f849ae99ce8670f)
 
 packages:
 
@@ -572,8 +572,8 @@ packages:
     resolution: {integrity: sha512-WOBp/EEGUiIsJSp7wcv/y6MO+lV9UoncWqxuFfm8eBwzWNgyfBd6Gz+IeKQ9jCmyhoH99g15M3T+QaVHFjizVA==}
     engines: {node: '>=4'}
 
-  hackmud-script-manager@0.21.1:
-    resolution: {integrity: sha512-XI+wvYlRNMp6mChl4BYsblP9optXLuP4lCNUHa7MEws/Zdo3kJkXUPkq7ChQXa9sRCnJaAZeL2yt58cUEFV67A==}
+  hackmud-script-manager@0.21.1-6eb310a:
+    resolution: {integrity: sha512-fMAPyg/wUwW3im3tjSpHTr/2uy2aJ3pEtNLf9O9XRqWatk6ruzb/89K0/cQxn/xbco2bfMoSwJqxTwVTqwuplw==}
     engines: {node: ^18 || >=20}
     hasBin: true
     peerDependencies:
@@ -1261,7 +1261,7 @@ snapshots:
 
   globals@11.12.0: {}
 
-  hackmud-script-manager@0.21.1(@babel/core@7.26.0)(typescript@5.7.2(patch_hash=t33fuoy5d7gnk76nfb77yfuzs4)):
+  hackmud-script-manager@0.21.1-6eb310a(@babel/core@7.26.0)(typescript@5.7.2(patch_hash=4687663a48d802485eff81e81b90e95738eb92cd35c81e6f0f849ae99ce8670f)):
     dependencies:
       '@babel/generator': 7.26.3
       '@babel/parser': 7.26.3
@@ -1305,7 +1305,7 @@ snapshots:
       proxy-polyfill: 0.3.2
       rollup: 4.29.1
       terser: 5.37.0
-      typescript: 5.7.2(patch_hash=t33fuoy5d7gnk76nfb77yfuzs4)
+      typescript: 5.7.2(patch_hash=4687663a48d802485eff81e81b90e95738eb92cd35c81e6f0f849ae99ce8670f)
     transitivePeerDependencies:
       - '@babel/core'
       - '@types/babel__core'
@@ -1429,7 +1429,7 @@ snapshots:
       commander: 2.20.3
       source-map-support: 0.5.21
 
-  typescript@5.7.2(patch_hash=t33fuoy5d7gnk76nfb77yfuzs4): {}
+  typescript@5.7.2(patch_hash=4687663a48d802485eff81e81b90e95738eb92cd35c81e6f0f849ae99ce8670f): {}
 
   unicode-canonical-property-names-ecmascript@2.0.1: {}
 
