@@ -27,6 +27,7 @@ function(context, args)
         "according to the calibration initiative, humans are expected to be ++++++ by the content": "engaged",
         "item_id py6874 contains a grand ++++++": "piano",
         "user ++++++ would leave no stars for the sqrz 480 if they could": "bnnyhunter",
+        "this council of 'revolutionary' robovac-patterns call themselves the ++++++": "thirteen",
 
         /* Obsolete vLAN questions. These only exist because of outdated locksims :D */
         "according to trust, ++++++ is more than just following directives": "sentience",
