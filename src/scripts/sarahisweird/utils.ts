@@ -1,5 +1,21 @@
-function(context, args)
-{
+const enum LogLevel {
+    DEBUG,
+    INFO,
+    WARN,
+    ERROR,
+    INTERNAL_WARNING,
+    INTERNAL_ERROR,
+}
+
+type LogEntry = {
+    level: LogLevel,
+    msg: string,
+    tag?: string,
+};
+
+const logEntries: LogEntry[] = [];
+
+export default function(context: Context, args?: unknown) {
     const navKeys = ["navigation", "entry", "get", "see", "command", "process", "open", "action", "nav", "cmd", "show"];
     const knownUsers = [
         "thedude", "yung_lespaul", "b4rry_vv", "amelie", "theformalartist",
@@ -17,10 +33,10 @@ function(context, args)
         "cr1sp", "rey_tr4cer", "king_luther", "leon", "shawn_aa",
         "thegreatvandross", "wonderous_steve", "turner_t", "_3rd_3y3_grill",
         "be_lavar", "carrie_on_", "doc_brown", "huey_n", "jamesb",
-        "mh_hamilton", "rob_rob_taylor", "shareef_j", "zap_moon"
+        "mh_hamilton", "rob_rob_taylor", "shareef_j", "zap_moon", "chub_thrumby"
     ];
 
-    function isPrime(n) {
+    function isPrime(n: number): boolean {
         for (let i = 2; i <= (n / 2); i++) {
             if ((n % i) == 0) return false;
         }
@@ -28,7 +44,7 @@ function(context, args)
         return true;
     }
 
-    function getPrimes(primeLimit) {
+    function getPrimes(primeLimit: number): number[] {
         let primeNumbers = [];
 
         for (let n = 2; n < primeLimit; n++) {
@@ -38,53 +54,43 @@ function(context, args)
         return primeNumbers;
     }
 
-    #G.logEntries = [];
-
-    // Basically an enum, right?
-    // Don't refer to these numbers directly, in case levels are added later!
-    const logLevelNumbers = {
-        debug: 0,
-        info: 1,
-        warn: 2,
-        error: 3,
-        internalError: 4,
-    };
-
     const levelTags = {
-        debug: "`C[DEBUG] `",
-        info: " `S[INFO]` ",
-        warn: " `K[WARN]` ",
-        error: "`D[ERROR]` ",
-        internalWarning: "`H[LOGGING WARNING]` ",
-        internalError: "`W[LOGGING ERROR]` ",
-
+        [ LogLevel.DEBUG ]: "`C[DEBUG] `",
+        [ LogLevel.INFO ]: " `S[INFO]` ",
+        [ LogLevel.WARN ]: " `K[WARN]` ",
+        [ LogLevel.ERROR ]: "`D[ERROR]` ",
+        [ LogLevel.INTERNAL_WARNING ]: "`H[LOGGING WARNING]` ",
+        [ LogLevel.INTERNAL_ERROR ]: "`W[LOGGING ERROR]` ",
     };
 
-    function shouldLog(current, actual) {
-        return logLevelNumbers[current] <= logLevelNumbers[actual];
+    function shouldLog(current: LogLevel, actual: LogLevel): boolean {
+        return current <= actual;
     }
 
     class Logger {
-        constructor(parent, name) {
+        _parent: Logger | null;
+        _name: string | null;
+
+        constructor(parent?: Logger, name?: string) {
             this._parent = parent || null;
             this._name = name || null;
         }
 
-        internalWarning(msg) {
-            #G.logEntries.push({
-                level: "internalWarning",
-                msg: msg.toString(),
-            })
-        }
-
-        internalError(msg) {
-            #G.logEntries.push({
-                level: "internalError",
+        internalWarning(msg: string) {
+            logEntries.push({
+                level: LogLevel.INTERNAL_WARNING,
                 msg: msg.toString(),
             });
         }
 
-        log(msg, level) {
+        internalError(msg: string) {
+            logEntries.push({
+                level: LogLevel.INTERNAL_ERROR,
+                msg: msg.toString(),
+            });
+        }
+
+        log(msg: string, level: LogLevel) {
             let msgToPush;
             if (msg === undefined) {
                 msgToPush = "";
@@ -94,36 +100,36 @@ function(context, args)
                 msgToPush = msg.toString();
             }
 
-            #G.logEntries.push({
-                level: level || "info",
-                tag: this._name,
+            logEntries.push({
+                level: level,
+                tag: this._name || undefined,
                 msg: msgToPush,
             });
         }
 
-        debug(msg) {
-            this.log(msg, "debug")
+        debug(msg: string) {
+            this.log(msg, LogLevel.DEBUG)
         }
 
-        info(msg) {
-            this.log(msg, "info")
+        info(msg: string) {
+            this.log(msg, LogLevel.INFO)
         }
 
-        warn(msg) {
-            this.log(msg, "warn")
+        warn(msg: string) {
+            this.log(msg, LogLevel.WARN)
         }
 
-        error(msg) {
-            this.log(msg, "error")
+        error(msg: string) {
+            this.log(msg, LogLevel.ERROR)
         }
 
-        getOutput(options) {
+        getOutput(options: { logLevel?: LogLevel, omitLevels?: boolean, omitNames?: boolean }) {
             options = options || {};
-            const logLevel = options.logLevel || "info";
+            const logLevel = options.logLevel || LogLevel.INFO;
             const omitLevels = options.omitLevels || false;
             const omitNames = options.omitNames || false;
 
-            return #G.logEntries
+            return logEntries
                 .filter(({ tag }) => (this._name == null) || (tag == this._name) || (tag && tag.includes(this._name)))
                 .filter(({ level }) => shouldLog(logLevel, level))
                 .map(({ level, msg, tag }) => {
@@ -134,7 +140,7 @@ function(context, args)
                 .join("\n");
         }
 
-        getLogger(name) {
+        getLogger(name: string) {
             if (!name) {
                 const thisLoggerName = this._parent ? this._parent._name : "root logger";
                 this.internalWarning(`Creating child logger of ${thisLoggerName} without a name!`);
@@ -148,18 +154,18 @@ function(context, args)
 
     const rootLogger = new Logger();
 
-    function parseSpecs(specs) {
+    function parseSpecs(specs: string) {
         const linesRaw = specs.split("\n");
 
         const lines = linesRaw.map(line => line.includes(" ") ? line.split(" ")[1] : line);
         const classScores = linesRaw[11].split(" ")
-            .map(s => /\d+/.exec(s))
-            .map(s => parseInt(s));
+            .map((s: string) => /\d+/.exec(s))
+            .map(s => parseInt(s as unknown as string));
 
         const upgradeSlots = lines[18].split("/").map(n => parseInt(n));
         const upgradesLoaded = lines[19].split("/").map(n => parseInt(n));
 
-        const stripColor = (str) => str.substring(2, str.length - 1);
+        const stripColor = (str: string) => str.substring(2, str.length - 1);
 
         return {
             username: stripColor(linesRaw[4].split(" ")[0]),
@@ -195,7 +201,7 @@ function(context, args)
         };
     }
 
-    function timeStringToDate(str) {
+    function timeStringToDate(str: string) {
         // Time strings are formatted as YYMMDD.HHMM
         const year = 2000 + parseInt(str.substring(0, 2));
         const month = parseInt(str.substring(2, 4)) - 1; // IT'S ZERO BASED >:(
@@ -207,7 +213,7 @@ function(context, args)
         return new Date(year, month, day, hour, minute);
     }
 
-    function findLastIndex(arr, callbackFn) {
+    function findLastIndex<T>(arr: T[], callbackFn: (t: T, i: number, arr: T[]) => boolean): number {
         for (let i = arr.length - 1; i >= 0; i--) {
             if (callbackFn(arr[i], i, arr)) return i;
         }
@@ -217,11 +223,11 @@ function(context, args)
 
     // How many seconds two dates can be apart before no longer being seen as the "same".
     const maxDateDifference = 120;
-    function dateDiffSecs(date1, date2) {
+    function dateDiffSecs(date1: Date, date2: Date) {
         return Math.abs(date1.getTime() - date2.getTime()) / 1000;
     }
 
-    function getLargeTxOffsets(maxLargeDistance) {
+    function getLargeTxOffsets(maxLargeDistance: number) {
         maxLargeDistance = maxLargeDistance !== undefined ? maxLargeDistance : 2;
 
         const offsets = [0];
@@ -234,19 +240,19 @@ function(context, args)
         return offsets;
     }
 
-    function txIndexOf(txs, t) {
+    function txIndexOf(txs: Transaction[], t: Date) {
         const index = txs.findIndex(({ time }) => dateDiffSecs(time, t) <= maxDateDifference);
         if (index < 0) return 0;
         return index;
     }
 
-    function lastTxIndexOf(txs, t) {
+    function lastTxIndexOf(txs: Transaction[], t: Date) {
         const index = findLastIndex(txs, ({ time }) => dateDiffSecs(time, t) <= maxDateDifference);
         if (index < 0) return txs.length;
         return index;
     }
 
-    function sumTxs(txs, caller) {
+    function sumTxs(txs: Transaction[], caller: string) {
         let sum = 0;
 
         for (const { sender, amount } of txs) {

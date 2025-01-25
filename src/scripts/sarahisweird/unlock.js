@@ -18,9 +18,12 @@ function(context, args) // { target: #s.some.npc }
         return result;
     }
 
+    let totalTimeSpentCalling = 0;
     function updateRes() {
         time("updateRes", () => {
+            const start = Date.now();
             res = target.call(keys);
+            totalTimeSpentCalling += Date.now() - start;
         });
     }
 
@@ -188,7 +191,11 @@ function(context, args) // { target: #s.some.npc }
         } else if (args.rental) {
             logger.warn(`We don't have a \`0${k3y}\` k3y upgrade! Requesting one from \`Dr3dbox\`\`4.\` (matr1x.r3dbox)...`);
 
+            $ms.sahara.sparkasse({ withdraw: prevBalance });
             const r3dboxResponse = args.rental.call({ request: k3y });
+            prevBalance = $hs.accts.balance();
+            $ms.accts.xfer_gc_to({ to: "sahara", amount: prevBalance });
+
             if (!r3dboxResponse.ok) {
                 logger.error("`Dr3dbox``4.` doesn't seem to have this k3y either :(");
                 return false;
@@ -593,7 +600,8 @@ function(context, args) // { target: #s.some.npc }
             return false;
         }
 
-        if (args.target.name == "beta.lock_sim") {
+        const lockSims = ["beta.lock_sim", "example.loc"];
+        if (lockSims.includes(args.target.name)) {
             // No hardline needed for locksim :)
             return true;
         }
@@ -658,8 +666,10 @@ function(context, args) // { target: #s.some.npc }
         }
     }
 
+    profilerLog.info(`Breaching took ${Date.now() - _START}ms, spending ${totalTimeSpentCalling}ms calling the loc.`);
+
     let message = "";
-    const loggerOutput = logger.getOutput({ logLevel: args.debug ? "debug" : "info" });
+    const loggerOutput = logger.getOutput({ logLevel: (args && args.debug) ? 0 : 1 });
     if (loggerOutput) message += loggerOutput;
     if (loggerOutput && res) message += "\n";
     if (res) message += res;
