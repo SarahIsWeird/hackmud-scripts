@@ -64,98 +64,86 @@ function(context, args)
         return logLevelNumbers[current] <= logLevelNumbers[actual];
     }
 
-    function log_internalWarning(self, msg) {
-        #G.logEntries.push({
-            level: "internalWarning",
-            msg: msg.toString(),
-        });
-    }
-
-    function log_internalError(self, msg) {
-        #G.logEntries.push({
-            level: "internalError",
-            msg: msg.toString(),
-        });
-    }
-
-    function log_log(self, msg, level) {
-        let msgToPush;
-        if (msg === undefined) {
-            msgToPush = "";
-        } else if (msg === null) {
-            msgToPush = "null";
-        } else {
-            msgToPush = msg.toString();
+    class Logger {
+        constructor(parent, name) {
+            this._parent = parent || null;
+            this._name = name || null;
         }
 
-        #G.logEntries.push({
-            level: level || "info",
-            tag: self._name,
-            msg: msgToPush,
-        });
-    }
-
-    function log_debug(self, msg) {
-        self.log(msg, "debug");
-    }
-
-    function log_info(self, msg) {
-        self.log(msg, "info");
-    }
-
-    function log_warn(self, msg) {
-        self.log(msg, "warn");
-    }
-
-    function log_error(self, msg) {
-        self.log(msg, "error");
-    }
-
-    function log_getOutput(self, options) {
-        options = options || {};
-        const logLevel = options.logLevel || "info";
-        const omitLevels = options.omitLevels || false;
-        const omitNames = options.omitNames || false;
-
-        return #G.logEntries
-            .filter(({ tag }) => (self._name == null) || (tag == self._name) || (tag && tag.includes(self._name)))
-            .filter(({ level }) => shouldLog(logLevel, level))
-            .map(({ level, msg, tag }) => {
-                const levelPrefix = !omitLevels ? levelTags[level] : "";
-                const namePrefix = (!omitNames && tag) ? `[${tag}] ` : "";
-                return levelPrefix + namePrefix + msg;
+        internalWarning(msg) {
+            #G.logEntries.push({
+                level: "internalWarning",
+                msg: msg.toString(),
             })
-            .join("\n");
-    }
-
-    function log_getLogger(self, name) {
-        if (!name) {
-            const thisLoggerName = self._parent ? self._parent._name : "root logger";
-            self._internalWarning(`Creating child logger of ${thisLoggerName} without a name!`);
-            name = "???";
         }
 
-        const childName = (self._name ? (self._name + "/") : "") + name;
-        return new Logger(self, childName);
-    }
+        internalError(msg) {
+            #G.logEntries.push({
+                level: "internalError",
+                msg: msg.toString(),
+            });
+        }
 
-    function Logger(parent, name) {
-        const l = {
-            _parent: parent || null,
-            _name: name || null,
-        };
+        log(msg, level) {
+            let msgToPush;
+            if (msg === undefined) {
+                msgToPush = "";
+            } else if (msg === null) {
+                msgToPush = "null";
+            } else {
+                msgToPush = msg.toString();
+            }
 
-        l.log = log_log.bind(l, l);
-        l.debug = log_debug.bind(l, l);
-        l.info = log_info.bind(l, l);
-        l.warn = log_warn.bind(l, l);
-        l.error = log_error.bind(l, l);
-        l._internalWarning = log_internalWarning.bind(l, l);
-        l._internalError = log_internalError.bind(l, l);
-        l.getLogger = log_getLogger.bind(l, l);
-        l.getOutput = log_getOutput.bind(l, l);
+            #G.logEntries.push({
+                level: level || "info",
+                tag: this._name,
+                msg: msgToPush,
+            });
+        }
 
-        return l;
+        debug(msg) {
+            this.log(msg, "debug")
+        }
+
+        info(msg) {
+            this.log(msg, "info")
+        }
+
+        warn(msg) {
+            this.log(msg, "warn")
+        }
+
+        error(msg) {
+            this.log(msg, "error")
+        }
+
+        getOutput(options) {
+            options = options || {};
+            const logLevel = options.logLevel || "info";
+            const omitLevels = options.omitLevels || false;
+            const omitNames = options.omitNames || false;
+
+            return #G.logEntries
+                .filter(({ tag }) => (this._name == null) || (tag == this._name) || (tag && tag.includes(this._name)))
+                .filter(({ level }) => shouldLog(logLevel, level))
+                .map(({ level, msg, tag }) => {
+                    const levelPrefix = !omitLevels ? levelTags[level] : "";
+                    const namePrefix = (!omitNames && tag) ? `[${tag}] ` : "";
+                    return levelPrefix + namePrefix + msg;
+                })
+                .join("\n");
+        }
+
+        getLogger(name) {
+            if (!name) {
+                const thisLoggerName = this._parent ? this._parent._name : "root logger";
+                this.internalWarning(`Creating child logger of ${thisLoggerName} without a name!`);
+                name = "???";
+            }
+
+            const childName = (this._name ? (this._name + "/") : "") + name;
+            return new Logger(this, childName);
+        }
     }
 
     const rootLogger = new Logger();
