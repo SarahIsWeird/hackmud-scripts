@@ -1,3 +1,4 @@
 dict/
 node_modules/
 player.d.ts
+.idea/
