@@ -1,11 +1,4 @@
-const enum LogLevel {
-    DEBUG,
-    INFO,
-    WARN,
-    ERROR,
-    INTERNAL_WARNING,
-    INTERNAL_ERROR,
-}
+import { LogLevel } from "/lib/logging";
 
 type LogEntry = {
     level: LogLevel,
