@@ -6,6 +6,7 @@ type CallArgs = {
     debug?: boolean,
     profiler?: boolean,
     max_large_distance?: number,
+    keys: Record<string, string | number>,
 };
 
 export default function(context: Context, args?: CallArgs) {
@@ -14,7 +15,7 @@ export default function(context: Context, args?: CallArgs) {
     const lib = $fs.scripts.lib();
     const logger = utils.logger;
 
-    const keys: Record<string, string | number> = {};
+    const keys: Record<string, string | number> = (args && args.keys) || {};
     let target: Scriptor;
     let res: string = '';
 
@@ -198,7 +199,7 @@ export default function(context: Context, args?: CallArgs) {
             logger.warn(`We don't have a \`0${k3y}\` k3y upgrade! Requesting one from \`Dr3dbox\`\`4.\` (matr1x.r3dbox)...`);
 
             $ms.sahara.sparkasse({ withdraw: prevBalance });
-            const r3dboxResponse = args!.rental.call({ request: k3y });
+            const r3dboxResponse = args!.rental.call({ request: k3y }) as unknown as { ok: boolean };
             prevBalance = $hs.accts.balance();
             $ms.accts.xfer_gc_to({ to: "sahara", amount: prevBalance });
 
@@ -207,7 +208,7 @@ export default function(context: Context, args?: CallArgs) {
                 return false;
             }
 
-            const k3yUpgradeId = $hs.sys.upgrades().length - 1; // :3
+            const k3yUpgradeId = ($hs.sys.upgrades() as unknown as Upgrade[]).length - 1; // :3
             $ms.sys.manage({ load: k3yUpgradeId });
 
             logger.warn(`Loaded k3y \`0${k3y}\` at upgrade index \`V${k3yUpgradeId}\`. Don't forget to return it with matr1x.r3dbox { return: true }!`);
@@ -360,7 +361,7 @@ export default function(context: Context, args?: CallArgs) {
 ////////////////////////////////////////////////////////////////////////////////
 
     // How many offsets to check for findLargeTransaction.
-    const maxLargeDistance = (args && args.max_large_distance) || 2;
+    const maxLargeDistance = (args && args.max_large_distance) || 5;
 
     function findLargeTransaction(near: Date, withdrawal: boolean) {
         const transactions = time("accts.transactions", () => $hs.accts.transactions({
@@ -664,7 +665,7 @@ export default function(context: Context, args?: CallArgs) {
                 $ms.sys.manage({ unload: loadedKey });
                 logger.info(`Unloaded k3y at upgrade index \`V${loadedKey}\`.`);
             }
-        } catch (error) {
+        } catch (error: any) {
             logger.error(error.toString());
         } finally {
             if (moneyIsInSahara) {
@@ -683,7 +684,7 @@ export default function(context: Context, args?: CallArgs) {
     if (res) message += res;
 
     return message;
-} catch (e) {
+} catch (e: any) {
     return { ok: false, msg:
         `${e.message}\n${e.stack}`
     }
