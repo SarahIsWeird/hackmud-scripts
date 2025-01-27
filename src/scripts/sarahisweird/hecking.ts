@@ -352,7 +352,7 @@ Available arguments:
             });
 
             if (upsertResult.length !== 1) {
-                logger.warn('Multiple progressed are saved!');
+                logger.warn('Multiple progresses are saved!');
             }
 
             if (upsertResult[0].ok) {
