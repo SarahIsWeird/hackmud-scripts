@@ -48,12 +48,13 @@ export default function(context: Context, args?: unknown) {
     }
 
     const levelTags = {
-        [ LogLevel.DEBUG ]: "`C[DEBUG] `",
-        [ LogLevel.INFO ]: " `S[INFO]` ",
-        [ LogLevel.WARN ]: " `K[WARN]` ",
-        [ LogLevel.ERROR ]: "`D[ERROR]` ",
-        [ LogLevel.INTERNAL_WARNING ]: "`H[LOGGING WARNING]` ",
-        [ LogLevel.INTERNAL_ERROR ]: "`W[LOGGING ERROR]` ",
+        [ LogLevel.TRACE ]: "[`cTRACE`] ",
+        [ LogLevel.DEBUG ]: "[`CDEBUG`] ",
+        [ LogLevel.INFO ]: " [`AINFO`] ",
+        [ LogLevel.WARN ]: " [`KWARN`] ",
+        [ LogLevel.ERROR ]: "[`DERROR`] ",
+        [ LogLevel.INTERNAL_WARNING ]: "[`HLOGGING WARNING`] ",
+        [ LogLevel.INTERNAL_ERROR ]: "[`WLOGGING ERROR`] ",
     };
 
     function shouldLog(current: LogLevel, actual: LogLevel): boolean {
@@ -100,6 +101,10 @@ export default function(context: Context, args?: unknown) {
             });
         }
 
+        trace(msg: string) {
+            this.log(msg, LogLevel.TRACE);
+        }
+
         debug(msg: string) {
             this.log(msg, LogLevel.DEBUG)
         }
@@ -116,9 +121,9 @@ export default function(context: Context, args?: unknown) {
             this.log(msg, LogLevel.ERROR)
         }
 
-        getOutput(options: { logLevel?: LogLevel, omitLevels?: boolean, omitNames?: boolean }) {
+        getOutput(options: { logLevel?: LogLevel, omitLevels?: boolean, omitNames?: boolean } = {}) {
             options = options || {};
-            const logLevel = options.logLevel || LogLevel.INFO;
+            const logLevel = options.logLevel !== undefined ? options.logLevel : LogLevel.INFO;
             const omitLevels = options.omitLevels || false;
             const omitNames = options.omitNames || false;
 
@@ -146,6 +151,10 @@ export default function(context: Context, args?: unknown) {
     }
 
     const rootLogger = new Logger();
+    const nullLogger = new Logger();
+    nullLogger.log = () => {};
+    nullLogger.getLogger = function () { return this; };
+    nullLogger.getOutput = () => '';
 
     function parseSpecs(specs: string) {
         const linesRaw = specs.split("\n");
@@ -255,12 +264,20 @@ export default function(context: Context, args?: unknown) {
         return sum;
     }
 
+    function isScriptor(val: any): boolean {
+        if (!val || (typeof(val) !== 'object')) return false;
+        if (!val.name || (typeof(val.name) !== 'string')) return false;
+        if (!val.call || (typeof(val.call) !== 'function')) return false;
+        return true;
+    }
+
     return {
         ok: true,
         navKeys,
         knownUsers,
         getPrimes,
         logger: rootLogger,
+        nullLogger,
         parseSpecs,
         timeStringToDate,
         findLastIndex,
@@ -269,5 +286,6 @@ export default function(context: Context, args?: unknown) {
         txIndexOf,
         lastTxIndexOf,
         sumTxs,
+        isScriptor,
     };
 }
