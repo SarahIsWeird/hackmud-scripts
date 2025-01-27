@@ -26,6 +26,7 @@ type SavedResult = {
     loc: string,
     keys: LockKeys,
     tryAllState: SavedTryAllState | null,
+    magnaraI: number,
 };
 
 type Unlocker = () => boolean;
@@ -95,6 +96,9 @@ Available arguments:
     let currentUnlockerName: string | null = null;
     let tryAllState: SavedTryAllState | null = null;
     let resuming = false;
+    let loadedKey = null;
+    let prevBalance = $hs.accts.balance();
+    let magnaraI: number = 0;
 
     const time = <T>(name: string, cb: () => T, logLevel: LogLevel = LogLevel.INFO): T => {
         const start = Date.now();
@@ -115,16 +119,18 @@ Available arguments:
         }
 
         tryAllState = savedResult.tryAllState;
+        magnaraI = savedResult.magnaraI;
 
         logger.info('Restored previous unlock progress.');
         logger.debug(`Restored keys: ${JSON.stringify(keys)}`);
         logger.debug(`Restored tryAllState: ${JSON.stringify(tryAllState)}`);
+        logger.debug(`Restored magnara index: ${magnaraI}`);
     }
 
     const debugPoke = () => {
         res = time('debugPoke', () => {
             const start = Date.now();
-            while (Date.now() < (start + 300)) {
+            while (Date.now() < (start + 200)) {
                 timeSpentPoking += 0.00000001;
             };
             return target.call(keys);
@@ -175,8 +181,6 @@ Available arguments:
         for (const [ k, v ] of choices.slice(start).entries()) {
             assertTimeLeft();
 
-            tryAllState.index = k;
-
             keys[key] = v;
             logger.trace(`Trying ${key}: ${v}`);
             poke();
@@ -185,10 +189,16 @@ Available arguments:
                 tryAllState = null;
                 return k;
             }
+
+            tryAllState.index = k;
         }
 
         return null;
     };
+
+////////////////////////////////////////////////////////////////////////////////
+//                          EZ-series unlockers                               //
+////////////////////////////////////////////////////////////////////////////////
 
     const unlockEz = (name: string) => {
         const ezUnlockCommands = [ 'open', 'unlock', 'release' ];
@@ -234,7 +244,11 @@ Available arguments:
         return true;
     };
 
-    const colors = ['red', 'orange', 'yellow', 'lime', 'green', 'cyan', 'blue', 'purple'];
+////////////////////////////////////////////////////////////////////////////////
+//                          c00X-series unlockers                             //
+////////////////////////////////////////////////////////////////////////////////
+
+    const colors = [ 'red', 'orange', 'yellow', 'lime', 'green', 'cyan', 'blue', 'purple' ];
     const getColors = (index: number) => {
         const complementIndex = (index + 4) % 8;
         const triad1Index = (index + 5) % 8;
@@ -253,10 +267,13 @@ Available arguments:
     };
 
     const unlockC00X = (name: string, extraKeys: string[], extraFailMsg: string) => {
-        const colorIndex = tryAll(colors, name, 'color name');
+        let colorIndex = tryAll(colors, name, 'color name');
         if (colorIndex == null) {
             logger.error(`Failed to unlock ${name}!`);
             return false;
+        } else if (colorIndex == -1) {
+            colorIndex = colors.indexOf(keys[name] as string);
+            logger.trace(`Restored color index ${colorIndex} for ${name}.`);
         }
 
         const colorData = getColors(colorIndex);
@@ -264,16 +281,18 @@ Available arguments:
             keys[key] = colorData![key as keyof typeof colorData];
         }
 
+        poke();
         if (res.includes(extraFailMsg)) {
-            logger.error(`Invalid extra values for color ${colorData!.color}`);
+            logger.error(`Invalid extra values for color ${colorData!.color}!`);
             return false;
         }
 
+        logger.info(`Unlocked \`S${name}\`: \`V${colors[colorIndex]}, \`${extraKeys.map(k=>`\`V${keys[k]}\``).join(', ')}`)
         return true;
     };
 
     const unlockC001 = () => {
-        return unlockC00X('c001', ['color_digit'], 'color name');
+        return unlockC00X('c001', ['color_digit'], 'color digit');
     };
 
     const unlockC002 = () => {
@@ -284,6 +303,201 @@ Available arguments:
         return unlockC00X('c003', ['c003_triad_1', 'c003_triad_2'], 'triad color');
     };
 
+////////////////////////////////////////////////////////////////////////////////
+//                          l0ck-series unlockers                             //
+////////////////////////////////////////////////////////////////////////////////
+
+    function unlockL0cket() {
+        const locketK3ys = ['6hh8xw', 'cmppiq', 'sa23uw', 'tvfkyq', 'uphlaw', 'vc2c7q', 'xwz7j4'];
+
+        if (tryAll(locketK3ys, 'l0cket', 'security k3y') == null) {
+            logger.error('Failed to unlock l0cket!');
+            return false;
+        }
+
+        return true;
+    }
+
+    function unlockL0ckbox() {
+        const k3y = res.substring(res.length - 6);
+        const keysWeHave = $hs.sys.upgrades({
+            full: true,
+            filter: {
+                name: { $in: ['k3y_v1', 'k3y_v2'] },
+                k3y: k3y,
+            },
+        }) as unknown as Upgrade[];
+
+        if (keysWeHave.length > 0) {
+            const k3yUpgrade = keysWeHave[0];
+            $ms.sys.manage({ load: k3yUpgrade.i });
+            loadedKey = k3yUpgrade.i;
+            logger.info(`Loaded k3y \`0${k3y}\` at upgrade index \`V${k3yUpgrade.i}\`.`);
+        } else if (rental) {
+            logger.warn(`We don't have a \`0${k3y}\` k3y upgrade! Requesting one from \`Dr3dbox\`\`4.\` (matr1x.r3dbox)...`);
+
+            $ms.sahara.sparkasse({ withdraw: prevBalance });
+            const r3dboxResponse = rental.call({ request: k3y }) as unknown as { ok: boolean };
+            prevBalance = $hs.accts.balance();
+            $ms.accts.xfer_gc_to({ to: 'sahara', amount: prevBalance });
+
+            if (!r3dboxResponse.ok) {
+                logger.error("`Dr3dbox``4.` doesn't seem to have this k3y either :(");
+                return false;
+            }
+
+            const k3yUpgradeId = ($hs.sys.upgrades() as unknown as Upgrade[]).length - 1; // :3
+            $ms.sys.manage({ load: k3yUpgradeId });
+
+            logger.warn(`Loaded k3y \`0${k3y}\` at upgrade index \`V${k3yUpgradeId}\`. Don't forget to return it with matr1x.r3dbox { return: true }!`);
+        } else {
+            logger.error(`Missing k3y \`0${k3y}\`! If you want to rent it automatically, run:`);
+            logger.error(`${context.this_script} { target: #s.${target.name}, rental: #s.matr1x.r3dbox }`);
+            return false;
+        }
+
+        poke();
+        return true;
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+//                           DATA_CHECK unlocker                              //
+////////////////////////////////////////////////////////////////////////////////
+
+    const answers: Record<string, string> = $db.f({ name: 'data_check_answers' }).first()!.answers as Record<string, string>;
+
+    function getDataCheckAnswer(prompt: string) {
+        return prompt.split('\n')
+            .map(q => answers[q.replaceAll('.', '')])
+            .filter(q => q)
+            .join('');
+    }
+
+    function unlockDataCheck() {
+        keys.DATA_CHECK = '';
+        poke();
+        keys.DATA_CHECK = getDataCheckAnswer(res);
+
+        poke();
+        if (res.includes('++++++')) {
+            logger.error('Failed to unlock DATA_CHECK!');
+            return false;
+        }
+
+        logger.debug(`Unlocked \`SDATA_CHECK\`: \`V${keys.DATA_CHECK}\``)
+        return true;
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+//                          CON_SPEC unlocker                                 //
+////////////////////////////////////////////////////////////////////////////////
+
+    function findNextLetters(letterSequence: string, count?: number) {
+        count = (typeof(count) === 'number') ? count : 3;
+
+        const aCharCode = 'A'.charCodeAt(0);
+        const firstOf = (arr: any[]) => arr[0];
+        const lastOf = (arr: any[]) => arr[arr.length - 1];
+
+        // First we convert the letters into numbers. The exact numbering system
+        // doesn't actually matter, it just has to be consistent.
+        // We just set A to 0 and Z to 25 for this.
+        const charToNumber = (c: string) => c.charCodeAt(0) - aCharCode;
+        const numberToChar = (n: number) => String.fromCharCode(n % 26 + aCharCode);
+        const numericSequence = letterSequence.split('').map(charToNumber);
+
+        // Then we figure out the distance between the numbers (letters).
+        // `steps` will look something like one of these examples:
+        //     [ 1, 1, 1 ]
+        //     [ 1, 3, 1 ]
+        //     [ 3, 1, 3 ]
+        //     [ 2, 2, 2 ]
+        //     [ -1, -1, -1 ]
+        //     [ -1, -3, -1 ]
+        const steps = numericSequence.slice(0, numericSequence.length - 1)
+            .map((n, i) => numericSequence[i + 1] - n);
+        
+        // We use this offset to make sure we hit the right step on all
+        // given input string sizes.
+        // [ 1, 3, 1 ] => [ 3, 1, 3 ], but [ 1, 3, 1, 3 ] => [ 1, 3, 1 ]
+        const offset = (firstOf(steps) !== lastOf(steps)) ? 0 : 1;
+
+        let lastNumber: number = lastOf(numericSequence);
+        const nextNumbers = [];
+        for (let i = 0; i < count; i++) {
+            const stepIndex = (i % 2) + offset;
+            const nextNumber = lastNumber + steps[stepIndex % 2];
+            nextNumbers.push(nextNumber);
+            lastNumber = nextNumber;
+        }
+
+        // Convert the numbers back into a string.
+        return nextNumbers.map(numberToChar).join('');
+    }
+
+    function unlockConSpec() {
+        keys.CON_SPEC = '';
+        poke();
+
+        const letterSequence = res.split('\n')[0];
+        const nextLetters = findNextLetters(letterSequence);
+        keys.CON_SPEC = nextLetters;
+        poke();
+        if (res.includes('Provide the next three letters in the sequence')) {
+            logger.error('Failed to unlock CON_SPEC!')
+            return false;
+        }
+
+        logger.debug(`Unlocked SCON_SPEC: ${nextLetters}`)
+        return true;
+    }
+
+////////////////////////////////////////////////////////////////////////////////
+//                           magnara unlocker                                 //
+////////////////////////////////////////////////////////////////////////////////
+
+    type DictionaryEntry = { type: 'dictionary', wordLength: number, words: string[] };
+    function getWords(wordLength: number): DictionaryEntry {
+        return $db.f({ type: 'dictionary', wordLength: wordLength }).first() as unknown as DictionaryEntry;
+    }
+
+    function areAnagrams(word1: string, word2: string) {
+        const sortedWord1 = word1.split('').sort().join('');
+        const sortedWord2 = word2.split('').sort().join('');
+
+        return sortedWord1 == sortedWord2;
+    }
+
+    function unlockMagnara() {
+        keys.magnara = '';
+        poke();
+
+        const promptParts = res.split('\n')[0].split(' ');
+        const scrambledLetters = promptParts[promptParts.length - 1];
+
+        const words = getWords(scrambledLetters.length);
+        if (words == null) {
+            logger.error(`Missing database entry! (Word length \`V${scrambledLetters.length}\`)`);
+            return false;
+        }
+
+        for (let i = magnaraI; i < words.words.length; i++) {
+            const word = words.words[i];
+            if (!areAnagrams(scrambledLetters, word)) continue;
+
+            logger.trace(`Trying magnara: ${word}`);
+            keys.magnara = word;
+            poke();
+            if (res.includes('recinroct')) continue;
+
+            logger.info(`Unlocked magnara: \`V${word}\``);
+            return true;
+        }
+
+        logger.error('Failed to unlock magnara!');
+        return false;
+    }
+
     const unlockers = {
         'EZ_21': unlockEz21,
         'EZ_35': unlockEz35,
@@ -291,10 +505,15 @@ Available arguments:
         'c001': unlockC001,
         'c002': unlockC002,
         'c003': unlockC003,
+        'l0cket': unlockL0cket,
+        'appropriate k3y': unlockL0ckbox,
+        'DATA_CHECK': unlockDataCheck,
+        'CON_SPEC': unlockConSpec,
+        'magnara': unlockMagnara,
     };
 
     const getUnlocker = (): [string | null, Unlocker | null] => {
-        const parts = res.split("\n");
+        const parts = res.split('\n');
         const currentLock = parts[parts.length - 1];
         for (const [ k, v ] of Object.entries(unlockers)) {
             if (currentLock.includes(k)) return [ k, v ];
@@ -306,12 +525,19 @@ Available arguments:
     const shouldContinueUnlocking = (): boolean =>
         res.includes && (res.includes('Denied') || res.includes('To unlock'));
 
+    const maybeResume = (): boolean => {
+        if (!tryAllState) return true;
+
+        resuming = true;
+        const unlocker = unlockers[tryAllState.unlocker as keyof typeof unlockers];
+        if (!time(tryAllState.unlocker, unlocker)) return false;
+        resuming = false;
+
+        return true;
+    }
+
     const unlockAll = (): boolean => {
-        if (tryAllState) {
-            resuming = true;
-            const unlocker = unlockers[tryAllState.unlocker as keyof typeof unlockers];
-            if (!time(tryAllState.unlocker, unlocker)) return false;
-        }
+        if (!maybeResume()) return false;
 
         poke();
 
@@ -336,30 +562,36 @@ Available arguments:
         return true;
     };
 
+    const saveProgress = () => {
+        if (tryAllState) {
+            delete keys[tryAllState.key];
+        }
+
+        const upsertResult = $db.us({ type: 'heckingSavedResult', loc: target.name }, {
+            $set: {
+                keys: keys,
+                tryAllState: tryAllState,
+                magnaraI: magnaraI,
+            },
+        });
+
+        if (upsertResult.length !== 1) {
+            logger.warn('Multiple progresses are saved!');
+        }
+
+        if (upsertResult[0].ok) {
+            logger.info('Progress was saved.');
+        } else {
+            logger.warn('Progress couldn\'t be saved to the database!');
+        }
+    };
+
     try {
         unlockAll();
     } catch (e) {
         if (e instanceof OutOfTimeError) {
-            if (tryAllState) {
-                delete keys[tryAllState.key];
-            }
-
-            const upsertResult = $db.us({ type: 'heckingSavedResult', loc: target.name }, {
-                $set: {
-                    keys: keys,
-                    tryAllState: tryAllState,
-                },
-            });
-
-            if (upsertResult.length !== 1) {
-                logger.warn('Multiple progresses are saved!');
-            }
-
-            if (upsertResult[0].ok) {
-                logger.info('Progress was saved.');
-            } else {
-                logger.warn('Progress couldn\'t be saved to the database!');
-            }
+            logger.warn('Less than a second of runtime left! Saving results...');
+            saveProgress();
         } else if (e instanceof Error) {
             logger.error(`${e.message}\n${e.stack}`);
         } else {
@@ -368,6 +600,7 @@ Available arguments:
     }
 
     profilingLogger.info(`Time spent poking: ${timeSpentPoking}ms`);
+    logger.info('\n' + res);
 
     return { ok: true, msg: logger.getOutput({ logLevel }) };
 };
