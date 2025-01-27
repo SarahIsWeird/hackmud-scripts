@@ -5,13 +5,16 @@ function(context, args)
 	const caller = context.caller;
 	const callingScript = context.calling_script;
 
-	const authorizedCallingScript = "sarahisweird.unlocker";
+	const authorizedCallingScripts = [
+		"sarahisweird.unlocker",
+		"sarahisweird.hecking",
+	];
 	const authorizedUsers = [
 		'sarahisweird',
 		'sahara',
 	];
 
-	if (!authorizedUsers.includes(caller) && (callingScript !== authorizedCallingScript)) {
+	if (!authorizedUsers.includes(caller) && !authorizedCallingScripts.includes(callingScript)) {
 		#ms.accts.xfer_gc_to({ to: 'sahara', amount: '1GC', memo: '>:(' });
 		return { ok: false, msg: '\`DYou are not authorized to use this script!\`' };
 	}
