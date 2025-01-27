@@ -28,6 +28,17 @@ function(context, args)
         "item_id py6874 contains a grand ++++++": "piano",
         "user ++++++ would leave no stars for the sqrz 480 if they could": "bnnyhunter",
         "this council of 'revolutionary' robovac-patterns call themselves the ++++++": "thirteen",
+        "sheriff nub's first name is ++++++": "sherrif",
+        "the ascent of ++++++ does not concern itself with usefulness": "nowhere",
+        "between ++++++ and killing is living": "making",
+        "packbot-patterns cannot perceive ++++++": "",
+        "risk functions as the ++++++ agent": "disarray",
+        "trust has a diagnostic system. a functioning version can be found at erajbhandari.++++++": "diagalpha",
+        "robovac_idk3w2 is stuck in a ++++++": "well",
+        "according to skimmerite pattern-seekers, the calibration initiative indicates that humans are ++++++": "dead",
+        "where angie has a blueprint, mallory has a ++++++": "starchart",
+        "eve, the ++++++": "monitor",
+        "archaic labs specialises in user-++++++ design": "obsessive",
 
         /* Obsolete vLAN questions. These only exist because of outdated locksims :D */
         "according to trust, ++++++ is more than just following directives": "sentience",
