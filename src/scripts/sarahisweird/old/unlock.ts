@@ -1,4 +1,4 @@
-import { LogLevel } from "/lib/logging";
+import { LogLevel } from "/src/lib/logging";
 
 type CallArgs = {
     target?: Scriptor,
@@ -46,7 +46,7 @@ export default function(context: Context, args?: CallArgs) {
 
     function tryAll(choices: any[], lock: string, failMsg: string) {
         let i = 0;
-    
+
         while (i < choices.length) {
             const choice = choices[i];
             keys[lock] = choice;
@@ -277,7 +277,7 @@ export default function(context: Context, args?: CallArgs) {
         //     [ -1, -3, -1 ]
         const steps = numericSequence.slice(0, numericSequence.length - 1)
             .map((n, i) => numericSequence[i + 1] - n);
-        
+
         // We use this offset to make sure we hit the right step on all
         // given input string sizes.
         // [ 1, 3, 1 ] => [ 3, 1, 3 ], but [ 1, 3, 1, 3 ] => [ 1, 3, 1 ]
@@ -635,7 +635,7 @@ export default function(context: Context, args?: CallArgs) {
         logger.warn("Withdrawn money from `Ksahara`.");
         return true;
     }
-    
+
     if (canStartAttempt()) {
         target = args!.target!;
 

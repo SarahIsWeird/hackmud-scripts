@@ -14,7 +14,7 @@ function(context, args) // { target: #s.cyberdine.memberlogin, user: "" }
 
     if (args.reset) {
         #db.r({ type: 'qr_decode_data' });
-        
+
         if (!targets[0]) return { ok: true, msg: 'State reset.' };
     }
 
@@ -22,6 +22,7 @@ function(context, args) // { target: #s.cyberdine.memberlogin, user: "" }
 
     let highsecLocs = prevData.highsecLocs || [];
     let midsecLocs = prevData.midsecLocs || [];
+    let otherLocs = prevData.otherLocs || [];
     const keys = {};
     function setNav(navTarget) {
         for (const navKey of utils.navKeys) {
@@ -42,11 +43,15 @@ function(context, args) // { target: #s.cyberdine.memberlogin, user: "" }
                 .filter(loc => loc != "NaN.NaN");
 
             for (const loc of locs) {
+                if (!loc.trim().replaceAll('\n', '')) continue;
+
                 const secLevel = #fs.scripts.get_level({ name: loc });
                 if (secLevel == 3) {
                     highsecLocs.push(loc);
                 } else if (secLevel == 2) {
                     midsecLocs.push(loc);
+                } else {
+                    otherLocs.push(loc.split('').map(c => c.charCodeAt(0).toString(16).padStart(2, '0')).join(' '));
                 }
             }
         }
@@ -85,15 +90,19 @@ function(context, args) // { target: #s.cyberdine.memberlogin, user: "" }
 
     highsecLocs = lib.uniq(highsecLocs.sort());
     midsecLocs = lib.uniq(midsecLocs.sort());
+    otherLocs = lib.uniq(otherLocs.sort());
 
     #db.us({ type: 'qr_decode_data' }, {
         $set: {
             highsecLocs: highsecLocs,
             midsecLocs: midsecLocs,
+            otherLocs: otherLocs,
         },
     });
 
-    const msg = `Found ${highsecLocs.length} HIGHSEC locs:\n${highsecLocs.join("\n")}\nFound ${midsecLocs.length} MIDSEC locs:\n${midsecLocs.join("\n")}`;
+    const msg = `Found ${highsecLocs.length} HIGHSEC locs:\n${highsecLocs.join("\n")}
+Found ${midsecLocs.length} MIDSEC locs:\n${midsecLocs.join("\n")}
+Found ${otherLocs.length} other locs:\n${otherLocs.join("\n")}`;
 
     return { ok: true, msg };
 }

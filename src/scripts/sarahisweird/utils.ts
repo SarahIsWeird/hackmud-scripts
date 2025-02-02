@@ -1,3 +1,4 @@
+import { Transaction } from "../../../env";
 import { LogLevel } from "/lib/logging";
 
 type LogEntry = {
@@ -8,7 +9,7 @@ type LogEntry = {
 
 const logEntries: LogEntry[] = [];
 
-export default function(context: Context, args?: unknown) {
+const utils = (context: Context, args?: unknown) => {
     const navKeys = ["navigation", "entry", "get", "see", "command", "process", "open", "action", "nav", "cmd", "show"];
     const knownUsers = [
         "thedude", "yung_lespaul", "b4rry_vv", "amelie", "theformalartist",
@@ -264,7 +265,7 @@ export default function(context: Context, args?: unknown) {
         return sum;
     }
 
-    function isScriptor(val: any): boolean {
+    function isScriptor(val: any): val is Scriptor {
         if (!val || (typeof(val) !== 'object')) return false;
         if (!val.name || (typeof(val.name) !== 'string')) return false;
         if (!val.call || (typeof(val.call) !== 'function')) return false;
@@ -288,4 +289,10 @@ export default function(context: Context, args?: unknown) {
         sumTxs,
         isScriptor,
     };
-}
+};
+
+export default utils;
+
+export type Utils = ReturnType<typeof utils>;
+export type Logger = Utils['logger'];
+export type UserSpecs = ReturnType<Utils['parseSpecs']>;

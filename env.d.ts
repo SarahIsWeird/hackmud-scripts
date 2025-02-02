@@ -17,6 +17,6 @@ type Upgrade = {
     sn: string,
     description: string,
     i: number,
-}
+};
 
-type MarketUpgrade = Omit<Upgrade, i>
+type MarketUpgrade = Omit<Upgrade, i>;
