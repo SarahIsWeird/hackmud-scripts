@@ -1,4 +1,3 @@
-import { Transaction } from "../../../env";
 import { LogLevel } from "/lib/logging";
 
 type LogEntry = {
@@ -9,7 +8,7 @@ type LogEntry = {
 
 const logEntries: LogEntry[] = [];
 
-const utils = (context: Context, args?: unknown) => {
+const utils = (_context: Context, _args?: unknown) => {
     const navKeys = ["navigation", "entry", "get", "see", "command", "process", "open", "action", "nav", "cmd", "show"];
     const knownUsers = [
         "thedude", "yung_lespaul", "b4rry_vv", "amelie", "theformalartist",
@@ -78,6 +77,8 @@ const utils = (context: Context, args?: unknown) => {
             });
         }
 
+        // Might be needed in the future.
+        // noinspection JSUnusedGlobalSymbols
         internalError(msg: string) {
             logEntries.push({
                 level: LogLevel.INTERNAL_ERROR,
@@ -268,8 +269,8 @@ const utils = (context: Context, args?: unknown) => {
     function isScriptor(val: any): val is Scriptor {
         if (!val || (typeof(val) !== 'object')) return false;
         if (!val.name || (typeof(val.name) !== 'string')) return false;
-        if (!val.call || (typeof(val.call) !== 'function')) return false;
-        return true;
+        if (!val.call) return false;
+        return typeof(val.call) === 'function';
     }
 
     return {
