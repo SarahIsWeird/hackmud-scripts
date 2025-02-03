@@ -32,7 +32,7 @@ export abstract class TryAllSolver<T extends TryAllState = TryAllState> implemen
     protected readonly failFlag: string;
 
     protected constructor(key: string, values: (string | number)[], failFlag: string, state?: T, lockName?: string) {
-        this.index = state?.index || -1;
+        this.index = state ? state.index : -1;
         this.lockName = lockName;
         this.key = key;
         this.values = values;
@@ -41,7 +41,7 @@ export abstract class TryAllSolver<T extends TryAllState = TryAllState> implemen
 
     canSolve(prompt: string): boolean {
         if (prompt.includes(this.failFlag)) return true;
-        if (prompt.includes('unlock parameter') && prompt.includes(this.key)) return true;
+        if (prompt.includes(this.key)) return true;
         if (this.lockName) return prompt.includes(this.lockName);
         return false;
     }
