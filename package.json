@@ -10,11 +10,12 @@
         "dev": "hsm push src/scripts --dts-path=player.d.ts --root-folder-path=src --no-quine-cheats --watch",
         "sync-macros": "hsm sync-macros",
         "emit-dts": "hsm emit-dts src/scripts",
-        "type-check": "tsc"
+        "test": "vitest run"
     },
     "devDependencies": {
         "hackmud-script-manager": "dev",
-        "typescript": "5.7.2"
+        "typescript": "5.7.2",
+        "vitest": "^3.0.4"
     },
     "pnpm": {
         "patchedDependencies": {
