@@ -13,15 +13,21 @@ export default function (context: Context, args?: any) {
     const rawMessage: string = args.msg;
 
     const message = rawMessage
+        // Handle custom colored text
         .replaceAll(/`[0-9a-zA-Z][^`]+`/g, (s) => `\`${s}\`${COLOR}`)
-        .replaceAll(/\w+\.\w+/g, scriptName => `\`${scriptName}\`${COLOR}`)
+        // Handle script names
+        .replaceAll(/[a-zA-Z_]\w+\.[a-zA-Z_]\w+/g, scriptName => `\`${scriptName}\`${COLOR}`)
+        // Don't color :
         .replaceAll(/.*/g, (substring) => {
             return substring.split(':')
                 .map(s => s == '' ? '' : `\`${COLOR}${s}\``)
                 .join(':');
         })
+        // Remove coloring from `Ca:`
         .replaceAll(/`([0-9a-zA-Z])([^:]):`/g, (_s, a, b) => `\`${a}${b}\`:`)
+        // Remove coloring from `C:a`
         .replaceAll(/`([0-9a-zA-Z]):([^:])`/g, (_s, a, b) => `:\`${a}${b}\``)
+        // Remove coloring from `C`, `C:` and `C::`
         .replaceAll(/`([0-9a-zA-Z])(:{0,2})`/g, (_s, _a, b) => b);
 
     if (channel) {
