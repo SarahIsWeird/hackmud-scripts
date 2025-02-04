@@ -40,6 +40,9 @@ test('parseArgs handles malformed arguments', () => {
     expect(parseArgs(undefined), 'Missing arguments are rejected.')
         .toBeNull();
 
+    expect(parseArgs(null), 'Null arguments are rejected.')
+        .toBeNull();
+
     expect(parseArgs({}), 'Empty arguments are rejected.')
         .toBeNull();
 });
