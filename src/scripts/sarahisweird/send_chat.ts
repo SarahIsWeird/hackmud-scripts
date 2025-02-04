@@ -28,7 +28,11 @@ export default function (context: Context, args?: any) {
         // Remove coloring from `C:a`
         .replaceAll(/`([0-9a-zA-Z]):([^:])`/g, (_s, a, b) => `:\`${a}${b}\``)
         // Remove coloring from `C`, `C:` and `C::`
-        .replaceAll(/`([0-9a-zA-Z])(:{0,2})`/g, (_s, _a, b) => b);
+        .replaceAll(/`([0-9a-zA-Z])(:{0,2})`/g, (_s, _a, b) => b)
+        // Add back coloring if there are two chars before :
+        .replaceAll(/([^`]{2})`:`([0-9a-zA-Z])/g, (_s, a, b) => `${a}:\`\`${b}`)
+        // Add back coloring if there are two chars after :
+        .replaceAll(/`:`([0-9a-zA-Z])([^`]{2})/g, (_s, a, b) => `\`\`${a}:${b}`);
 
     if (channel) {
         $fs.chats.send({ channel: channel, msg: message });
