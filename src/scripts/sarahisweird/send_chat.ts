@@ -17,6 +17,8 @@ export default function (context: Context, args?: any) {
         .replaceAll(/`[0-9a-zA-Z][^`]+`/g, (s) => `\`${s}\`${COLOR}`)
         // Handle script names
         .replaceAll(/[a-zA-Z_]\w+\.[a-zA-Z_]\w+/g, scriptName => `\`${scriptName}\`${COLOR}`)
+        // Handle mentions
+        .replaceAll(/@[a-zA-Z_]\w+/g, mention => `\`${mention}\`${COLOR}`)
         // Don't color :
         .replaceAll(/.*/g, (substring) => {
             return substring.split(':')
