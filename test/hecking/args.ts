@@ -1,9 +1,11 @@
 import { expect, test } from 'vitest';
 import { parseArgs as realParseArgs } from '/lib/hecking/args';
 import utilsScript, { Utils } from '/scripts/sarahisweird/utils';
-import t1SolverScript, { T1SolverTier } from '/scripts/sarahisweird/t1_solvers';
-import t2SolverScript, { T2SolverTier } from '/scripts/sarahisweird/t2_solvers';
+import t1SolverScript from '/scripts/sarahisweird/t1_solvers';
+import t2SolverScript from '/scripts/sarahisweird/t2_solvers';
 import { LogLevel } from '/lib/logging';
+import { T1SolverTier } from '/lib/hecking/tiers/tier1';
+import { T2SolverTier } from '/lib/hecking/tiers/tier2';
 
 const context: Context = {
     caller: 'ada_lovelace',
