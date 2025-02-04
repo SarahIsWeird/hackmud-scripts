@@ -1,4 +1,4 @@
-import { Logger, Utils } from "/scripts/sarahisweird/utils";
+import { Utils } from "/scripts/sarahisweird/utils";
 import { LockKeys } from "./common";
 import { LogLevel } from '/lib/logging';
 import { SolverTier } from '/lib/hecking/solvers';
@@ -15,11 +15,14 @@ export type HeckingArgs = {
     maxLargeTxDistance: number,
 }
 
-export const parseArgs = (context: Context, utils: Utils, logger: Logger, args: any): HeckingArgs | null => {
+export const parseArgs = (context: Context, utils: Utils, args: any): HeckingArgs | null => {
     if (!args || typeof args !== 'object') return null;
     if (!utils.isScriptor(args.target)) return null;
     if (args.rental && !utils.isScriptor(args.rental)) return null;
     if (args.keys && typeof(args.keys) !== 'object') return null;
+    if (args.keys && Array.isArray(args.keys)) return null;
+    if ((args.tx_dist !== undefined) && (args.tx_dist !== null) && (typeof(args.tx_dist) !== 'number')) return null;
+    if (args.tx_dist < 0) return null;
 
     const defaultTierScriptors = [{
         name: 'sarahisweird.t1_solvers',
@@ -32,10 +35,13 @@ export const parseArgs = (context: Context, utils: Utils, logger: Logger, args: 
         logLevel: args.trace ? LogLevel.TRACE : (args.debug ? LogLevel.DEBUG : LogLevel.INFO),
         profiler: !!args.profiler,
         reset: !!args.reset,
-        suppliedKeys: args.keys,
+        suppliedKeys: args.keys || {},
         caller: context.caller,
-        maxLargeTxDistance: args.tx_dist || 2,
+        maxLargeTxDistance: typeof(args.tx_dist) === 'number' ? args.tx_dist : 2,
     };
+
+    if (args.tiers && !Array.isArray(args.tiers)) return null;
+    if (args.tiers?.length === 0) return null;
 
     const tierScriptors = args.tiers || defaultTierScriptors;
     if (tierScriptors.find((value: any) => !utils.isScriptor(value))) return null;

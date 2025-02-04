@@ -9,7 +9,7 @@ export default function (context: Context, rawArgs?: unknown) {
     const utils = $fs.sarahisweird.utils() as Utils;
     const logger = utils.logger.getLogger('`MHECK`');
 
-    const args = parseArgs(context, utils, logger, rawArgs);
+    const args = parseArgs(context, utils, rawArgs);
     if (args === null) return usage;
 
     const failure = () =>

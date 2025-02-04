@@ -17,19 +17,19 @@ const t1SolverClasses = {
 export type T1SolverNames = keyof typeof t1SolverClasses;
 export type T1Solvers = Record<T1SolverNames, Solver<any>>;
 
-export default function (context: Context, args?: unknown) {
-    class T1SolverTier implements SolverTier<T1Solvers> {
-        getName(): string {
-            return 'T1SolverTier';
-        }
-
-        getSolvers() {
-            return t1SolverClasses;
-        }
-
-        onStateLoad(): void {}
-        onStateSave(): void {}
+export class T1SolverTier implements SolverTier<T1Solvers> {
+    getName(): string {
+        return 'T1SolverTier';
     }
 
+    getSolvers() {
+        return t1SolverClasses;
+    }
+
+    onStateLoad(): void {}
+    onStateSave(): void {}
+}
+
+export default function (_context: Context, _args?: unknown) {
     return new T1SolverTier();
 }
