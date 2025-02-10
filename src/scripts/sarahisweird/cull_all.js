@@ -2,6 +2,33 @@ function(context, args) // t: #s.skimmerite.public
 {
     const lib = #fs.scripts.lib();
 
+    if (args.sort) {
+        const lockStackOrder = [ 'CON_TELL', 'sn_w_glock', 'ez_40', 'acct_nt', 'magnara', 'l0ckbox' ];
+
+        return $ms.shuna.sort({
+            prio: [ 'lock_stack', 'loaded', 'type', 'tier', 'rarity', 'name', 'k3ys' ],
+            types_order: [ 'glam', 'lock', 'bot_brain', 'script_space', 'script', 'chat', 'tool' ],
+            k3ys: true,
+            custom_fns: {
+                lock_stack: (a, b) => {
+                    if (a.type === 'glam') return -1;
+                    if (b.type === 'glam') return 1;
+
+                    if (!a.loaded) return 1;
+                    if (!b.loaded) return -1;
+
+                    const iA = lockStackOrder.indexOf(a.name);
+                    const iB = lockStackOrder.indexOf(b.name);
+
+                    if (iA === -1) return 1;
+                    if (iB === -1) return -1;
+
+                    return iA - iB;
+                },
+            },
+        });
+    }
+
     const upgrades = #hs.sys.upgrades({
         full: true,
         filter: {
