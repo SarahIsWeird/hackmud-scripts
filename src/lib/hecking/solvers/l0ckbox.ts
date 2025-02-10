@@ -1,6 +1,5 @@
 import { Solution, Solver, SolvingError } from '/lib/hecking/common';
 import { Logger, Utils } from '/scripts/sarahisweird/utils';
-import { Upgrade } from '../../../../env';
 import { HeckingArgs } from '/lib/hecking/args';
 
 type L0ckboxState = { key?: string, rentedKey: boolean };
