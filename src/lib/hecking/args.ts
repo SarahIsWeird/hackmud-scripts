@@ -40,16 +40,12 @@ export const parseArgs = (context: Context, utils: Utils, args: any): HeckingArg
         maxLargeTxDistance: typeof(args.tx_dist) === 'number' ? args.tx_dist : 10,
     };
 
-    if (args.tiers && !Array.isArray(args.tiers)) return null;
-    if (args.tiers?.length === 0) return null;
-
-    const tierScriptors = args.tiers || defaultTierScriptors;
-    if (tierScriptors.find((value: any) => !utils.isScriptor(value))) return null;
-    const tiers = tierScriptors.map((scriptor: Scriptor) => scriptor.call({}));
+    if (args.tier && !utils.isScriptor(args.tier)) return null;
+    const tierScriptor = args.tier.call() || defaultTierScriptors;
 
     return {
         ...argsObject,
-        tiers: tiers,
+        tiers: tierScriptor,
     };
 };
 
@@ -57,8 +53,8 @@ const usageMsg =
 `Usage: sarahisweird.hecking { \`Ntarget\`: #s.some.loc\`c, [args]\` }
 Available arguments:
   \`Ntarget\`: \`Vscriptor\`   | The \`Lloc\` to unlock
-   \`Ntiers\`: \`Vscriptor[]\` | A list of solver tier scriptors.
-                         - \`SDefault\`: \`V[\`#s.sarahisweird.t1_solvers\`V]\`
+    \`Ntier\`: \`Vscriptor\`   | A solver tier scriptor.
+                         - \`SDefault\`: #s.sarahisweird.t1_solvers
                          - Available scriptors:
                              #s.sarahisweird.t1_solvers (\`2FULLSEC\`)
                              #s.sarahisweird.t2_solvers (\`FMIDSEC\`)
@@ -77,7 +73,7 @@ Available arguments:
                            Caveat: saved solutions have precedence over provided keys.
    \`Nreset\`: \`Vboolean\`    | Reset database entry for this loc.
  \`Ntx_dist\`: \`Vnumber\`     | \`Nacct_nt\` specific:
-                         - The maximum offset of large transactions. (default: \`V3\`)
+                         - The maximum offset of large transactions. (default: \`V10\`)
                          - Only used for '\`AGet me the amount of a large deposit\`'-style prompts.
                          - Mainly used for testing purposes, but can be increased if the solver
                            doesn't find a correct answer.

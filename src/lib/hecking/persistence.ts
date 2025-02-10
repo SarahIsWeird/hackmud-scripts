@@ -14,7 +14,7 @@ const loadStates = (args: HeckingArgs, rootLogger: Logger): Record<string, State
     const logger = rootLogger.getLogger('`YDB`');
 
     for (const tier of args.tiers) {
-        rootLogger.info(`Calling onStateLoad hook of ${tier.getName()}`)
+        rootLogger.debug(`Calling onStateLoad hook of ${tier.getName()}`)
         tier.onStateLoad();
     }
 
@@ -55,7 +55,7 @@ export const saveSolverStates = (args: HeckingArgs, rootLogger: Logger, solvers:
     const solverStates = mapValues(solvers, solver => solver.getState());
 
     for (const tier of args.tiers) {
-        rootLogger.info(`Calling onStateSave hook of ${tier.getName()}`)
+        rootLogger.debug(`Calling onStateSave hook of ${tier.getName()}`)
         tier.onStateSave();
     }
 
