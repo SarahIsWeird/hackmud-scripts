@@ -1,4 +1,4 @@
-import { Solution, Solver, SolvingError } from '/lib/hecking/common';
+import { Solution, Solver } from '/lib/hecking/common';
 import { HeckingArgs } from '/lib/hecking/args';
 import { Logger, Utils } from '/scripts/sarahisweird/utils';
 import { stringHash } from '/lib/common';
@@ -44,13 +44,14 @@ export class AcctNtSolver implements Solver<AcctNtState> {
     }
 
     getSolution(prompt: string): Solution {
-        if (prompt.includes('acct_nt')) return { acct_nt: '' };
+        const parts = prompt.split('\n');
+        if (parts[parts.length - 1].includes('acct_nt')) return { acct_nt: '' };
 
         if (!this.values || (this.promptHash !== stringHash(prompt))) {
-            this.populateSolutions(prompt);
-        } else if (this.index === this.values.length) {
+            this.populateSolutions(parts[parts.length - 1]);
+        } else if (this.index + 1 === this.values.length) {
             this.logger.error('Failed to find correct solution for acct_nt!');
-            throw new SolvingError();
+            throw new Error();
         } else {
             this.index++;
         }
@@ -105,16 +106,56 @@ export class AcctNtSolver implements Solver<AcctNtState> {
         });
 
         const nearestTxI = this.findNearestTransactionIndex(transactions, time);
-        this.values = [];
-        for (const offset of this.utils.getLargeTxOffsets(this.maxLargeTxDistance)) {
-            const transaction = transactions[nearestTxI + offset];
-            if (!transaction) continue; // May be out-of-range!
+        const start = Math.max(nearestTxI - this.maxLargeTxDistance, 0);
+        const end = Math.min(nearestTxI + this.maxLargeTxDistance, transactions.length);
 
-            this.values.push(transaction.amount);
-        }
+        this.values = transactions.slice(start, end)
+            .map(tx => tx.amount)
+            .sort((a, b) => b - a);
     }
 
     private populateNetGCSolutions(prompt: string) {
-        throw new Error('Net GC solver not yet implemented!');
+        const parts = prompt.split(' ');
+        const fromStr = parts[parts.length - 3];
+        const toStr = parts[parts.length - 1];
+
+        const fromRaw = this.utils.timeStringToDate(fromStr);
+        const toRaw = this.utils.timeStringToDate(toStr);
+
+        const MS_IN_A_MINUTE = 1000 * 60;
+        const earliestFrom = new Date(fromRaw.valueOf() - MS_IN_A_MINUTE);
+        const latestFrom = new Date(fromRaw.valueOf() + MS_IN_A_MINUTE);
+        const earliestTo = new Date(toRaw.valueOf() - MS_IN_A_MINUTE);
+        const latestTo = new Date(toRaw.valueOf() + MS_IN_A_MINUTE);
+
+        this.logger.info(`${fromStr} to ${toStr}`);
+        this.logger.info(`${earliestFrom} to ${earliestTo}`);
+        this.logger.info(`${latestFrom} to ${latestTo}`);
+
+        const withMemosOnly = prompt.includes('with memo');
+        const withoutMemosOnly = prompt.includes('without memo');
+
+        const transactions = $hs.accts.transactions({ count: 'all' })
+            .filter(({ time }) =>
+                (time >= earliestFrom) && (time <= latestTo))
+            .filter(({ memo }) => {
+                if (withMemosOnly) return memo;
+                if (withoutMemosOnly) return !memo;
+                return true;
+            });
+
+        const lastStart = this.utils.lastTxIndexOf(transactions, toRaw);
+        const earliestEnd = this.utils.txIndexOf(transactions, fromRaw);
+        this.logger.info(`${lastStart} to ${earliestEnd}`);
+
+        this.values = [];
+        for (let startI = lastStart; startI >= 0; startI--) {
+            for (let endI = earliestEnd - 1; endI < transactions.length; endI++) {
+                if (startI > endI) continue;
+
+                const sum = this.utils.sumTxs(transactions.slice(startI, endI + 1), this.caller);
+                this.values.push(sum);
+            }
+        }
     }
 }

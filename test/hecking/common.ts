@@ -80,3 +80,40 @@ test('Constructing solver using getState return picks up where it left off', () 
     expect(actual, 'All answers are tried in the same order as without state saving.')
         .toStrictEqual(answers);
 });
+
+test('getSolution handles lock rotations', () => {
+    const answers = [ 1, 2, 3, 4, 5 ];
+    const solver = new TestSolver('my_key', answers, 'incorrect number');
+
+    // This would be the first solving attempt.
+    const firstPrompt = 'Denied access by SAHARA my_key lock.';
+    expect(solver.canSolve(firstPrompt)).toBe(true);
+    expect(solver.getSolution(firstPrompt)).toHaveProperty('my_key', 1);
+
+    const secondPrompt = 'LOCK_ERROR: 1 is the incorrect number.';
+    expect(solver.canSolve(secondPrompt)).toBe(true);
+    expect(solver.getSolution(secondPrompt)).toHaveProperty('my_key', 2);
+
+    const thirdPrompt = 'Denied access by HALPERYON SYSTEMS EZ_21 lock.';
+    expect(solver.canSolve(thirdPrompt)).toBe(false);
+    // solver.getSolution isn't called, since the solver can't solve the lock.
+
+    // *rotation*
+
+    const fourthPrompt = 'LOCK_ERROR: 2 is the incorrect number.';
+    expect(solver.canSolve(fourthPrompt)).toBe(true);
+    expect(solver.getSolution(fourthPrompt)).toHaveProperty('my_key', 3);
+
+    let lastSolution = 3;
+    const MAX_TRIES = 10;
+    for (let i = 0; i < MAX_TRIES; i++) {
+        const prompt = `LOCK_ERROR: ${lastSolution} is the incorrect number.`;
+        expect(solver.canSolve(prompt)).toBe(true);
+
+        const solution = solver.getSolution(prompt).my_key;
+        expect(solution).toBeOneOf(answers);
+
+        if (solution === 1) break;
+        lastSolution = solution as number;
+    }
+});

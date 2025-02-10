@@ -217,6 +217,16 @@ const utils = (_context: Context, _args?: unknown) => {
         return new Date(year, month, day, hour, minute);
     }
 
+    function dateToTimeString(date: Date): string {
+        const year = date.getUTCFullYear().toString().slice(2);
+        const month = (date.getUTCMonth() + 1).toString().padStart(2, '0');
+        const day = date.getUTCDate().toString().padStart(2, '0');
+        const hour = date.getUTCHours().toString().padStart(2, '0');
+        const minute = date.getUTCMinutes().toString().padStart(2, '0');
+
+        return `${year}${month}${day}.${hour}${minute}`;
+    }
+
     function findLastIndex<T>(arr: T[], callbackFn: (t: T, i: number, arr: T[]) => boolean): number {
         for (let i = arr.length - 1; i >= 0; i--) {
             if (callbackFn(arr[i], i, arr)) return i;
@@ -282,6 +292,7 @@ const utils = (_context: Context, _args?: unknown) => {
         nullLogger,
         parseSpecs,
         timeStringToDate,
+        dateToTimeString,
         findLastIndex,
         dateDiffSecs,
         getLargeTxOffsets,
