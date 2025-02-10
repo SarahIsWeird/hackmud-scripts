@@ -22,7 +22,6 @@ function(context, args) // { target: #s.cyberdine.memberlogin, user: "" }
 
     let highsecLocs = prevData.highsecLocs || [];
     let midsecLocs = prevData.midsecLocs || [];
-    let otherLocs = prevData.otherLocs || [];
     const keys = {};
     function setNav(navTarget) {
         for (const navKey of utils.navKeys) {
@@ -50,19 +49,31 @@ function(context, args) // { target: #s.cyberdine.memberlogin, user: "" }
                     highsecLocs.push(loc);
                 } else if (secLevel == 2) {
                     midsecLocs.push(loc);
-                } else {
-                    otherLocs.push(loc.split('').map(c => c.charCodeAt(0).toString(16).padStart(2, '0')).join(' '));
                 }
             }
         }
     }
 
-    for (const target of targets) {
+    let targetI = prevData.targetI || 0;
+    let userI = prevData.i || 0;
+    let shouldStop = false;
+    for (const [i, target] of targets.entries()) {
+        if (targetI > i) continue;
+        targetI = i;
+
+        if (shouldStop) break;
+        userI = 0;
+
         setNav("order_qrs");
 
         let username = null;
         let isShifting = false;
-        for (const user of utils.knownUsers) {
+        for (const [i, user] of utils.knownUsers.slice(userI).entries()) {
+            if (Date.now() + 1000 > _END) {
+                userI = i;
+                break;
+            }
+
             keys.username = user;
             const res = target.call(keys);
             if (lib.is_obj(res) && res.msg && res.msg.includes('Shift')) {
@@ -74,7 +85,10 @@ function(context, args) // { target: #s.cyberdine.memberlogin, user: "" }
             }
 
             username = user;
-            break;
+
+            getLocs(target);
+            getLocs(target);
+            getLocs(target);
         }
 
         if (isShifting) continue;
@@ -82,27 +96,22 @@ function(context, args) // { target: #s.cyberdine.memberlogin, user: "" }
         if (username == null) {
             return { ok: false, msg: "Couldn't find correct username!" };
         }
-
-        getLocs(target);
-        getLocs(target);
-        getLocs(target);
     }
 
     highsecLocs = lib.uniq(highsecLocs.sort());
     midsecLocs = lib.uniq(midsecLocs.sort());
-    otherLocs = lib.uniq(otherLocs.sort());
 
     #db.us({ type: 'qr_decode_data' }, {
         $set: {
             highsecLocs: highsecLocs,
             midsecLocs: midsecLocs,
-            otherLocs: otherLocs,
+            targetI: targetI,
+            userI: userI,
         },
     });
 
     const msg = `Found ${highsecLocs.length} HIGHSEC locs:\n${highsecLocs.join("\n")}
-Found ${midsecLocs.length} MIDSEC locs:\n${midsecLocs.join("\n")}
-Found ${otherLocs.length} other locs:\n${otherLocs.join("\n")}`;
+Found ${midsecLocs.length} MIDSEC locs:\n${midsecLocs.join("\n")}`;
 
     return { ok: true, msg };
 }
