@@ -14,4 +14,5 @@ export interface SolverTier<Solvers extends {}> {
 
     onStateLoad(): void;
     onStateSave(): void;
+    onErrorExit(): void;
 }

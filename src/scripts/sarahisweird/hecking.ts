@@ -102,6 +102,10 @@ export default function (context: Context, rawArgs?: unknown) {
         }
 
         success = false;
+
+        for (const tier of args.tiers) {
+            tier.onErrorExit();
+        }
     }
 
     logger.info('Output:\n' + res);

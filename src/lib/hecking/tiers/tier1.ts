@@ -28,4 +28,5 @@ export class T1SolverTier implements SolverTier<T1Solvers> {
 
     onStateLoad(): void {}
     onStateSave(): void {}
+    onErrorExit(): void {}
 }

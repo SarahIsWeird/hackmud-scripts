@@ -13,6 +13,11 @@ type SavedState = {
 const loadStates = (args: HeckingArgs, rootLogger: Logger): Record<string, State> => {
     const logger = rootLogger.getLogger('`YDB`');
 
+    for (const tier of args.tiers) {
+        rootLogger.info(`Calling onStateLoad hook of ${tier.getName()}`)
+        tier.onStateLoad();
+    }
+
     if (args.reset) {
         logger.warn('Resetting state!');
         $db.r({ type: 'hecking_saved_state', loc: args.target.name });
@@ -48,6 +53,11 @@ export const saveSolverStates = (args: HeckingArgs, rootLogger: Logger, solvers:
     const logger = rootLogger.getLogger('`YDB`');
 
     const solverStates = mapValues(solvers, solver => solver.getState());
+
+    for (const tier of args.tiers) {
+        rootLogger.info(`Calling onStateSave hook of ${tier.getName()}`)
+        tier.onStateSave();
+    }
 
     const dbResult = $db.us({
         type: 'hecking_saved_state',
