@@ -26,7 +26,10 @@ const utils = (_context: Context, _args?: unknown) => {
         "cr1sp", "rey_tr4cer", "king_luther", "leon", "shawn_aa",
         "thegreatvandross", "wonderous_steve", "turner_t", "_3rd_3y3_grill",
         "be_lavar", "carrie_on_", "doc_brown", "huey_n", "jamesb",
-        "mh_hamilton", "rob_rob_taylor", "shareef_j", "zap_moon", "chub_thrumby"
+        "mh_hamilton", "rob_rob_taylor", "shareef_j", "zap_moon", "chub_thrumby",
+        "catness", "foxy_guy", "free_man_morg", "indie_jones", "rocky_b",
+        "turn_a_nat", "hermione", "juno_macguff", "lion_eyes", "med_evarz",
+        "sidney_prescott", "theshrillery", "i_am_the_eggman", "sportsfan2031"
     ];
 
     function isPrime(n: number): boolean {
