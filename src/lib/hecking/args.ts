@@ -22,7 +22,7 @@ export const parseArgs = (context: Context, utils: Utils, args: any): HeckingArg
     if (args.keys && typeof(args.keys) !== 'object') return null;
     if (args.keys && Array.isArray(args.keys)) return null;
     if ((args.tx_dist !== undefined) && (args.tx_dist !== null) && (typeof(args.tx_dist) !== 'number')) return null;
-    if (args.tx_dist < 0) return null;
+    if (args.tx_dist <= 0) return null;
 
     const defaultTierScriptors = [{
         name: 'sarahisweird.t1_solvers',
@@ -37,7 +37,7 @@ export const parseArgs = (context: Context, utils: Utils, args: any): HeckingArg
         reset: !!args.reset,
         suppliedKeys: args.keys || {},
         caller: context.caller,
-        maxLargeTxDistance: typeof(args.tx_dist) === 'number' ? args.tx_dist : 2,
+        maxLargeTxDistance: typeof(args.tx_dist) === 'number' ? args.tx_dist : 10,
     };
 
     if (args.tiers && !Array.isArray(args.tiers)) return null;

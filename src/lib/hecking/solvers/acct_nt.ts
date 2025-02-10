@@ -1,4 +1,4 @@
-import { Solution, Solver } from '/lib/hecking/common';
+import { Solution, Solver, SolvingError } from '/lib/hecking/common';
 import { HeckingArgs } from '/lib/hecking/args';
 import { Logger, Utils } from '/scripts/sarahisweird/utils';
 import { stringHash } from '/lib/common';
@@ -93,6 +93,8 @@ export class AcctNtSolver implements Solver<AcctNtState> {
     }
 
     private populateLargeTransactionSolutions(prompt: string) {
+        this.logger.trace('Populating large transaction solutions');
+
         const parts = prompt.split(' ');
         const timeStr = parts[parts.length - 1];
 
@@ -115,47 +117,46 @@ export class AcctNtSolver implements Solver<AcctNtState> {
     }
 
     private populateNetGCSolutions(prompt: string) {
+        this.logger.trace('Populating net GC solutions');
+
         const parts = prompt.split(' ');
         const fromStr = parts[parts.length - 3];
         const toStr = parts[parts.length - 1];
 
-        const fromRaw = this.utils.timeStringToDate(fromStr);
-        const toRaw = this.utils.timeStringToDate(toStr);
-
-        const MS_IN_A_MINUTE = 1000 * 60;
-        const earliestFrom = new Date(fromRaw.valueOf() - MS_IN_A_MINUTE);
-        const latestFrom = new Date(fromRaw.valueOf() + MS_IN_A_MINUTE);
-        const earliestTo = new Date(toRaw.valueOf() - MS_IN_A_MINUTE);
-        const latestTo = new Date(toRaw.valueOf() + MS_IN_A_MINUTE);
-
-        this.logger.info(`${fromStr} to ${toStr}`);
-        this.logger.info(`${earliestFrom} to ${earliestTo}`);
-        this.logger.info(`${latestFrom} to ${latestTo}`);
+        const from = this.utils.timeStringToDate(fromStr);
+        const to = this.utils.timeStringToDate(toStr);
 
         const withMemosOnly = prompt.includes('with memo');
         const withoutMemosOnly = prompt.includes('without memo');
 
-        const transactions = $hs.accts.transactions({ count: 'all' })
-            .filter(({ time }) =>
-                (time >= earliestFrom) && (time <= latestTo))
-            .filter(({ memo }) => {
-                if (withMemosOnly) return memo;
-                if (withoutMemosOnly) return !memo;
-                return true;
-            });
+        const multiplier = prompt.includes('spent') ? -1 : 1;
 
-        const lastStart = this.utils.lastTxIndexOf(transactions, toRaw);
-        const earliestEnd = this.utils.txIndexOf(transactions, fromRaw);
-        this.logger.info(`${lastStart} to ${earliestEnd}`);
+        let transactions = $hs.accts.transactions({ count: 'all' })
+            .filter(({ memo }) => withMemosOnly ? !!memo : true)
+            .filter(({ memo }) => withoutMemosOnly ? !memo : true);
+
+        const firstStart = this.utils.txIndexOf(transactions, to);
+        const lastEnd = this.utils.lastTxIndexOf(transactions, from);
+
+        transactions = transactions.slice(Math.max(firstStart, 0), lastEnd + 1);
+
+        let lastStart = this.utils.lastTxIndexOf(transactions, to);
+        if (lastStart === transactions.length) lastStart = 0;
+
+        let firstEnd = this.utils.txIndexOf(transactions, from);
 
         this.values = [];
-        for (let startI = lastStart; startI >= 0; startI--) {
-            for (let endI = earliestEnd - 1; endI < transactions.length; endI++) {
-                if (startI > endI) continue;
+        for (let start = lastStart + 1; start >= 0; start--) {
+            for (let end = firstEnd - 1; end < transactions.length; end++) {
+                if (end < start) continue;
 
-                const sum = this.utils.sumTxs(transactions.slice(startI, endI + 1), this.caller);
-                this.values.push(sum);
+                const sum = this.utils.sumTxs(transactions.slice(start, end + 1), this.caller);
+                this.values.push(sum * multiplier);
             }
+        }
+
+        if (this.values.length === 0) {
+            throw new SolvingError('Failed to find any acct_nt net GC solutions!');
         }
     }
 }
