@@ -15,7 +15,7 @@ export interface SolverConstructor<T extends State> {
     new (args: HeckingArgs, utils: Utils, logger: Logger, state?: T): Solver<T>;
 }
 
-export type Solution = { [k: string]: string | number | undefined };
+export type Solution = { [k: string]: string | number | Scriptor | undefined };
 export interface Solver<T extends State> {
     canSolve(prompt: string): boolean;
     getInitialSolutions(): Solution;
@@ -41,7 +41,7 @@ export abstract class TryAllSolver<T extends TryAllState = TryAllState> implemen
 
     canSolve(prompt: string): boolean {
         if (prompt.includes(this.failFlag)) return true;
-        if (prompt.includes(this.key)) return true;
+        if (prompt.includes('Required unlock parameter') && prompt.includes(this.key)) return true;
         if (this.lockName) return prompt.includes(this.lockName);
         return false;
     }

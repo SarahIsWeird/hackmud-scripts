@@ -10,8 +10,8 @@ function findNextLetters(letterSequence: string, count?: number) {
     const firstOf = (arr: any[]) => arr[0];
     const lastOf = (arr: any[]) => arr[arr.length - 1];
 
-    // First we convert the letters into numbers. The exact numbering system
-    // doesn't actually matter, it just has to be consistent.
+    // First, we convert the letters into numbers. The exact numbering system
+    // doesn't matter, it just has to be consistent.
     // We just set A to 0 and Z to 25 for this.
     const charToNumber = (c: string) => c.charCodeAt(0) - aCharCode;
     const numberToChar = (n: number) => String.fromCharCode(n % 26 + aCharCode);
@@ -46,12 +46,23 @@ function findNextLetters(letterSequence: string, count?: number) {
     return nextNumbers.map(numberToChar).join("");
 }
 
+const countDigits = ({ s, d }: { s: string, d: number }) =>
+    s.split('').reduce((acc, char) =>
+        acc + (char === d.toString() ? 1 : 0), 0);
+
+const countingScriptor = {
+    name: 'sarahisweird.hecking',
+    call: countDigits,
+};
+
 type ConSpecState = { result?: string };
 export class ConSpecSolver implements Solver<ConSpecState> {
     private result?: string;
+    private logger: Logger;
 
     constructor(_args: HeckingArgs, _utils: Utils, _logger: Logger, state?: ConSpecState) {
         this.result = state?.result;
+        this.logger = _logger;
     }
 
     canSolve(prompt: string): boolean {
@@ -64,6 +75,10 @@ export class ConSpecSolver implements Solver<ConSpecState> {
     }
 
     getSolution(prompt: string): Solution {
+        if (prompt.includes('scriptor')) {
+            return { CON_SPEC: countingScriptor };
+        }
+
         const letterSequence = prompt.split('\n')[0];
         this.result = findNextLetters(letterSequence);
 
