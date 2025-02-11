@@ -58,11 +58,9 @@ const countingScriptor = {
 type ConSpecState = { result?: string };
 export class ConSpecSolver implements Solver<ConSpecState> {
     private result?: string;
-    private logger: Logger;
 
     constructor(_args: HeckingArgs, _utils: Utils, _logger: Logger, state?: ConSpecState) {
         this.result = state?.result;
-        this.logger = _logger;
     }
 
     canSolve(prompt: string): boolean {
