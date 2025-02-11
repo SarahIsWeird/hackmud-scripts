@@ -20,7 +20,7 @@ export default function (context: Context, rawArgs?: unknown) {
         profilingLogger.log = () => {};
     }
 
-    let keys: Record<string, string | number | undefined> = {};
+    let keys: Record<string, string | number | Scriptor | undefined> = {};
     let res: string = '';
     const poke = () => {
         const start = Date.now();

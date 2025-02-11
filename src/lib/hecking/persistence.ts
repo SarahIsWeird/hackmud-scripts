@@ -25,7 +25,8 @@ const loadStates = (args: HeckingArgs, rootLogger: Logger): Record<string, State
 
     const savedStates = $db.f({
         type: 'hecking_saved_state',
-        loc: args.target.name
+        loc: args.target.name,
+        user: args.caller,
     }).first() as SavedState | null;
 
     if (!savedStates) {
@@ -62,6 +63,7 @@ export const saveSolverStates = (args: HeckingArgs, rootLogger: Logger, solvers:
     const dbResult = $db.us({
         type: 'hecking_saved_state',
         loc: args.target.name,
+        user: args.caller,
     }, {
         $set: { unlockerStates: solverStates },
     });
