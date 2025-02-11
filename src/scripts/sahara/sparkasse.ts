@@ -1,5 +1,4 @@
-function(context, args)
-{
+export default function(context: Context, args?: any) {
 	// Sparkasse is a German bank. :)
 
 	const caller = context.caller;
@@ -9,13 +8,17 @@ function(context, args)
 		"sarahisweird.unlocker",
 		"sarahisweird.hecking",
 	];
+
 	const authorizedUsers = [
 		'sarahisweird',
 		'sahara',
+		'piplup',
+		'chimchar',
+		'turtwig',
 	];
 
-	if (!authorizedUsers.includes(caller) && !authorizedCallingScripts.includes(callingScript)) {
-		#ms.accts.xfer_gc_to({ to: 'sahara', amount: '1GC', memo: '>:(' });
+	if (!authorizedUsers.includes(caller) && !authorizedCallingScripts.includes(callingScript || '')) {
+		$ms.accts.xfer_gc_to({ to: 'sahara', amount: '1GC', memo: '>:(' });
 		return { ok: false, msg: '\`DYou are not authorized to use this script!\`' };
 	}
 
@@ -24,12 +27,12 @@ function(context, args)
 	}
 
 	if (args.get_balance) {
-		const balance = #fs.accts.balance_of_owner();
+		const balance = $fs.accts.balance_of_owner();
 		return { ok: true, bal: balance, max: 5_000_000_000 };
 	}
 
 	const withdrawAmount = args.withdraw;
-	#fs.accts.xfer_gc_to_caller({ amount: withdrawAmount, memo: "Wenn's ums Geld geht, Sparkasse." });
+	$fs.accts.xfer_gc_to_caller({ amount: withdrawAmount, memo: "Wenn's ums Geld geht, Sparkasse." });
 
 	return { ok: true, msg: 'Wenns ums Geld geht, Bank?' };
 }
