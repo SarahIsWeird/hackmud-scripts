@@ -69,6 +69,8 @@ export class ConSpecSolver implements Solver<ConSpecState> {
     }
 
     getInitialSolutions(): Solution {
+        if ((this.result as any) === null) return { CON_SPEC: '' };
+
         return { CON_SPEC: this.result };
     }
 
