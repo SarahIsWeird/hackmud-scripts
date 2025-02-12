@@ -39,6 +39,7 @@ function(context, args)
         "where angie has a blueprint, mallory has a ++++++": "starchart",
         "eve, the ++++++": "monitor",
         "archaic labs specialises in user-++++++ design": "obsessive",
+        "HO is an acronym where H stands for ++++++": "heuristic",
 
         /* Obsolete vLAN questions. These only exist because of outdated locksims :D */
         "according to trust, ++++++ is more than just following directives": "sentience",
