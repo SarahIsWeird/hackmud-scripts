@@ -1,12 +1,14 @@
 import { Solution, Solver, SolvingError } from '/lib/hecking/common';
 import { Logger, Utils } from '/scripts/sarahisweird/utils';
 import { HeckingArgs } from '/lib/hecking/args';
+import { authorizedUsers } from '/lib/common';
 
 type L0ckboxState = { key?: string, rentedKey: boolean };
 
 export class L0ckboxSolver implements Solver<L0ckboxState> {
     private readonly logger: Logger;
     private readonly rentalService: Scriptor | null;
+    private readonly caller: string;
 
     private key?: string;
     private ownKeyIndex?: number;
@@ -15,6 +17,7 @@ export class L0ckboxSolver implements Solver<L0ckboxState> {
     constructor(args: HeckingArgs, _utils: Utils, rootLogger: Logger, state?: L0ckboxState) {
         this.logger = rootLogger.getLogger('`Fl0ckbox`');
         this.rentalService = args.rental;
+        this.caller = args.caller;
 
         this.key = state?.key;
         this.didRentKey = state?.rentedKey || false;
@@ -34,6 +37,7 @@ export class L0ckboxSolver implements Solver<L0ckboxState> {
         this.key = parts[parts.length - 1];
 
         if (this.loadOwnedKey()) return {};
+        if (this.getFromSparkasse()) return {};
 
         if (this.rentalService) {
             if (this.rentKey()) return {};
@@ -76,6 +80,23 @@ export class L0ckboxSolver implements Solver<L0ckboxState> {
 
         this.logger.info(`Loaded k3y \`0${this.key}\` at upgrade index \`V${upgrade.i}\`.`);
         this.ownKeyIndex = upgrade.i;
+        return true;
+    }
+
+    private getFromSparkasse(): boolean {
+        if (!authorizedUsers.includes(this.caller)) return false;
+        if (!this.key) return false;
+
+        const allKeys = $ms.sahara.sparkasse({ list_keys: true });
+        if (!Array.isArray(allKeys)) return false;
+        if (!allKeys.includes(this.key)) return false;
+
+        const response = $ms.sahara.sparkasse({ k3y: this.key });
+        if (!response || typeof(response) !== 'object') return false;
+        if (!(response as ScriptResponse).ok) return false;
+
+        const keyIndex = ($hs.sys.upgrades() as any[]).length - 1;
+        $ms.sys.manage({ load: keyIndex });
         return true;
     }
 

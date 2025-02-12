@@ -38,3 +38,11 @@ export const stringHash = (str: string): number => {
     // :(
     return parseInt(hash.toString());
 };
+
+export const authorizedUsers = [
+    'sarahisweird',
+    'sahara',
+    'piplup',
+    'chimchar',
+    'turtwig',
+];
