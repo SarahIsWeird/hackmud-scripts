@@ -2,7 +2,7 @@ function(context, args) // t: #s.skimmerite.public
 {
     const lib = #fs.scripts.lib();
 
-    if (args.sort) {
+    if (args && args.sort) {
         const lockStackOrder = [ 'CON_TELL', 'sn_w_glock', 'ez_40', 'acct_nt', 'magnara', 'l0ckbox' ];
 
         return $ms.shuna.sort({
